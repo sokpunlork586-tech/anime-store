@@ -1,0 +1,6 @@
+{
+  "name": "Anime Store",
+  "description": "Discover your favorite anime universe. Shop collectible anime figures, manga box sets, plush toys, clothing, and exclusive merchandise.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

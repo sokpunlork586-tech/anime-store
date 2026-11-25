@@ -1,0 +1,62 @@
+import type { BackupItem, AutoBackupConfig } from '@/types';
+
+export const initialAutoBackupConfig: AutoBackupConfig = {
+  isEnabled: true,
+  frequency: 'daily',
+  backupTime: '02:00',
+  retentionDays: 30,
+  storageTarget: 'Local Encrypted Storage',
+  lastRunAt: '2026-11-20 02:00:15',
+  nextRunAt: '2026-11-22 02:00:00',
+};
+
+export const initialBackups: BackupItem[] = [
+  {
+    id: 'bak-101',
+    filename: 'anime_store_backup_full_20261120_020015.json',
+    backupType: 'full',
+    fileSizeBytes: 248900,
+    triggerType: 'automatic',
+    status: 'completed',
+    checksumSha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    recordCounts: { products: 18, categories: 8, orders: 15, users: 6, payments: 6, income: 4, expenses: 6 },
+    createdAt: '2026-11-20 02:00:15',
+    createdBy: 'System Scheduler',
+  },
+  {
+    id: 'bak-102',
+    filename: 'anime_store_backup_catalog_20261119_184510.json',
+    backupType: 'catalog',
+    fileSizeBytes: 86400,
+    triggerType: 'manual',
+    status: 'completed',
+    checksumSha256: '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+    recordCounts: { products: 18, categories: 8 },
+    createdAt: '2026-11-19 18:45:10',
+    createdBy: 'Admin',
+  },
+  {
+    id: 'bak-103',
+    filename: 'anime_store_backup_full_20261119_020012.json',
+    backupType: 'full',
+    fileSizeBytes: 241200,
+    triggerType: 'automatic',
+    status: 'completed',
+    checksumSha256: '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8',
+    recordCounts: { products: 18, categories: 8, orders: 14, users: 6, payments: 5, income: 3, expenses: 5 },
+    createdAt: '2026-11-19 02:00:12',
+    createdBy: 'System Scheduler',
+  },
+  {
+    id: 'bak-104',
+    filename: 'anime_store_backup_orders_financial_20261118_153000.json',
+    backupType: 'orders_financial',
+    fileSizeBytes: 112500,
+    triggerType: 'manual',
+    status: 'completed',
+    checksumSha256: '4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a',
+    recordCounts: { orders: 13, payments: 5, income: 3, expenses: 4 },
+    createdAt: '2026-11-18 15:30:00',
+    createdBy: 'Finance Admin',
+  },
+];

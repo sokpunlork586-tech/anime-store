@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+venv/
+.venv/
+env/
+
+# Build & Cache
+build/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Local Data, Logs & Backups
+*.log
+*.sqlite
+*.db
+backend/backups/
+.playwright-mcp/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

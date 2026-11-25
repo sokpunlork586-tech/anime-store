@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build & TypeScript cache
+build/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Logs & Editor
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

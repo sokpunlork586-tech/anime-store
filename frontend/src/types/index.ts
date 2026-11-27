@@ -29,6 +29,7 @@ export interface Product {
   description: string;
   specifications: Record<string, string>;
   variants: string[];
+  tags?: string[];
   reviews: ProductReview[];
   createdAt: string;
 }
@@ -113,6 +114,9 @@ export interface StoreSettings {
   announcementText: string;
   promoBannerTitle: string;
   promoBannerSubtitle: string;
+  heroBannerImage?: string;
+  promoBannerImage?: string;
+  clubBannerImage?: string;
   phone: string;
   email: string;
   address: string;

@@ -533,25 +533,25 @@ export default function FinancialAccounts() {
             </>
           }
         >
-          <div className="space-y-4 text-xs">
+          <div className="space-y-4">
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Income Title</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Income Title</label>
               <input
                 type="text"
                 placeholder="e.g. Comic Con Merch Booth Sales"
                 value={incTitle}
                 onChange={(e) => setIncTitle(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Category</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Category</label>
                 <select
                   value={incCategory}
                   onChange={(e) => setIncCategory(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   <option value="Sales">Sales</option>
                   <option value="Wholesale">Wholesale</option>
@@ -563,48 +563,48 @@ export default function FinancialAccounts() {
               </div>
 
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Amount ($)</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Amount ($)</label>
                 <input
                   type="number"
                   step="0.01"
                   min="0.01"
                   value={incAmount}
                   onChange={(e) => setIncAmount(parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none font-bold text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Date</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Date</label>
                 <input
                   type="date"
                   value={incDate}
                   onChange={(e) => setIncDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Reference Number</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Reference Number</label>
                 <input
                   type="text"
                   placeholder="e.g. REV-2026-99"
                   value={incRef}
                   onChange={(e) => setIncRef(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none font-mono text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Payment Method</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Payment Method</label>
                 <select
                   value={incMethod}
                   onChange={(e) => setIncMethod(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   <option value="ABA PayWay">ABA PayWay</option>
                   <option value="KHQR / Bakong">KHQR / Bakong</option>
@@ -614,11 +614,11 @@ export default function FinancialAccounts() {
               </div>
 
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Deposit Account</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Deposit Account</label>
                 <select
                   value={incAccount}
                   onChange={(e) => setIncAccount(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   {financialAccounts.map((a) => (
                     <option key={a.id} value={a.accountName}>
@@ -630,12 +630,12 @@ export default function FinancialAccounts() {
             </div>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Audit Notes</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Audit Notes</label>
               <textarea
                 rows={2}
                 value={incNotes}
                 onChange={(e) => setIncNotes(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
           </div>
@@ -669,25 +669,25 @@ export default function FinancialAccounts() {
             </>
           }
         >
-          <div className="space-y-4 text-xs">
+          <div className="space-y-4">
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Expense Description</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Expense Description</label>
               <input
                 type="text"
                 placeholder="e.g. Good Smile Figure Import Shipment"
                 value={expTitle}
                 onChange={(e) => setExpTitle(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Category</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Category</label>
                 <select
                   value={expCategory}
                   onChange={(e) => setExpCategory(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   <option value="Inventory Import">Inventory Import</option>
                   <option value="Shipping & Logistics">Shipping & Logistics</option>
@@ -701,35 +701,35 @@ export default function FinancialAccounts() {
               </div>
 
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Amount ($)</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Amount ($)</label>
                 <input
                   type="number"
                   step="0.01"
                   min="0.01"
                   value={expAmount}
                   onChange={(e) => setExpAmount(parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none font-bold text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Date</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Date</label>
                 <input
                   type="date"
                   value={expDate}
                   onChange={(e) => setExpDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Disbursement Bank</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Disbursement Bank</label>
                 <select
                   value={expAccount}
                   onChange={(e) => setExpAccount(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   {financialAccounts.map((a) => (
                     <option key={a.id} value={a.accountName}>
@@ -741,23 +741,23 @@ export default function FinancialAccounts() {
             </div>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Receipt Attachment URL (optional)</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Receipt Attachment URL (optional)</label>
               <input
                 type="text"
                 placeholder="https://storage.example.com/receipts/inv.pdf"
                 value={expReceipt}
                 onChange={(e) => setExpReceipt(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs font-mono"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Notes</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Notes</label>
               <textarea
                 rows={2}
                 value={expNotes}
                 onChange={(e) => setExpNotes(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
           </div>

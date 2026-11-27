@@ -1,12 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { BookOpen, Sparkles } from 'lucide-react';
 import { useStore } from '../contexts/StoreContext';
-import { STORE_ASSETS } from '../data/mockData';
 import { ProductCard } from '../components/ProductCard';
 import { SafeImage } from '../components/SafeImage';
 
 export const MangaPage: React.FC = () => {
-  const { products } = useStore();
+  const { products, settings } = useStore();
   const [selectedSeries, setSelectedSeries] = useState('All');
 
   const mangaProducts = useMemo(
@@ -55,7 +54,7 @@ export const MangaPage: React.FC = () => {
         </div>
         <div className="md:col-span-5 bg-[#FBF3E8] min-h-[220px]">
           <SafeImage
-            src={STORE_ASSETS.mangaCollection}
+            src={mangaProducts[0]?.image || settings.promoBannerImage || ''}
             alt="Collector Manga Box Set"
             className="w-full h-full object-cover"
           />

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import String, Integer, Float, Boolean, DateTime
+from sqlalchemy import String, Integer, Float, Boolean, Text, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 
@@ -12,7 +12,7 @@ class Customer(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     phone: Mapped[str] = mapped_column(String(50), default="", nullable=False)
-    avatar: Mapped[str] = mapped_column(String(500), default="", nullable=False)
+    avatar: Mapped[str] = mapped_column(Text, default="", nullable=False)
     address: Mapped[str] = mapped_column(String(500), default="", nullable=False)
     city: Mapped[str] = mapped_column(String(100), default="", nullable=False)
     country: Mapped[str] = mapped_column(String(100), default="Cambodia", nullable=False)

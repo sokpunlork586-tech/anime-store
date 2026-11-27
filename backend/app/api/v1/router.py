@@ -15,6 +15,7 @@ from app.api.v1.endpoints import (
     payments,
     financial,
     backups,
+    notifications,
 )
 
 api_router = APIRouter()
@@ -33,3 +34,4 @@ api_router.include_router(settings.router)
 api_router.include_router(payments.router)
 api_router.include_router(financial.router)
 api_router.include_router(backups.router)
+api_router.include_router(notifications.router)

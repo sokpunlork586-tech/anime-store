@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Award, HeartHandshake, PackageCheck, Sparkles } from 'lucide-react';
-import { STORE_ASSETS } from '../data/mockData';
 import { useStore } from '../contexts/StoreContext';
 import { SafeImage } from '../components/SafeImage';
 
@@ -13,12 +12,12 @@ export const AboutPage: React.FC = () => {
       {/* Editorial Story Banner */}
       <section className="rounded-3xl overflow-hidden bg-[#F7E5CE] border border-[#EAD3B8] grid grid-cols-1 lg:grid-cols-12 items-stretch">
         <div className="lg:col-span-7 p-7 sm:p-10 flex flex-col justify-center">
-          <p className="text-xs font-semibold text-[#C85322]">Est. 2022 · Phnom Penh, Cambodia</p>
+          <p className="text-xs font-semibold text-[#C85322]">Est. 2022 · {settings.address || 'Cambodia'}</p>
           <h1 className="mt-2 font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#3D160F] leading-tight">
             Built by Collectors, For Every Anime Fan
           </h1>
           <p className="mt-4 text-sm sm:text-base text-[#5E3527] leading-relaxed">
-            {settings.storeName} began as a weekend manga-swap table in Phnom Penh and grew into a dedicated storefront for authentic Japanese PVC figures, slipcase manga collections, embroidered streetwear haori, and cozy studio plushies.
+            {settings.storeName} began as a weekend manga-swap table and grew into a dedicated storefront for authentic Japanese PVC figures, slipcase manga collections, embroidered streetwear haori, and cozy studio plushies.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -38,7 +37,7 @@ export const AboutPage: React.FC = () => {
         </div>
         <div className="lg:col-span-5 min-h-[260px]">
           <SafeImage
-            src={STORE_ASSETS.promoBanner}
+            src={settings.promoBannerImage || ''}
             alt="Anime Store story artwork"
             className="w-full h-full object-cover"
           />
@@ -108,7 +107,7 @@ export const AboutPage: React.FC = () => {
         <div className="md:col-span-4">
           <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-sm">
             <SafeImage
-              src={STORE_ASSETS.clubHero}
+              src={settings.clubBannerImage || ''}
               alt="Join Our Anime Club"
               className="w-full h-full object-cover object-top"
             />

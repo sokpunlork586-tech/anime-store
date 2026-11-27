@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, Truck } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import Button from '@/components/common/Button';
@@ -14,6 +14,17 @@ export default function ShippingSettings() {
     currencySymbol: settings.currencySymbol || '$',
     taxRate: (settings.taxRate ?? 9).toString(),
   });
+
+  useEffect(() => {
+    setShippingForm({
+      freeShippingThreshold: (settings.shipping?.freeShippingThreshold ?? 50).toString(),
+      standardRate: (settings.shipping?.standardRate ?? 5.99).toString(),
+      expressRate: (settings.shipping?.expressRate ?? 12.99).toString(),
+      currency: settings.currency || 'USD',
+      currencySymbol: settings.currencySymbol || '$',
+      taxRate: (settings.taxRate ?? 9).toString(),
+    });
+  }, [settings]);
 
   const handleSaveShipping = (e: React.FormEvent) => {
     e.preventDefault();

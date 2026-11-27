@@ -42,7 +42,7 @@ class CategoryService:
         new_cat = Category(
             name=req.name.strip(),
             slug=req.slug.strip(),
-            short_name=req.short_name or "",
+            short_name=(req.short_name or "").strip() or req.name.strip().split()[0],
             description=req.description or "",
             image=req.image or "",
             icon_key=req.icon_key or "Package",
@@ -50,6 +50,8 @@ class CategoryService:
             status=req.status or "active",
         )
         created = await self.category_repo.create(new_cat)
+        await self.db.commit()
+        await self.db.refresh(created)
         res = CategoryResponse.model_validate(created)
         res.product_count = 0
         return res
@@ -69,6 +71,7 @@ class CategoryService:
             setattr(cat, k, v)
 
         await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(cat)
         return await self.get_by_id(cat.id)
 
@@ -76,4 +79,6 @@ class CategoryService:
         cat = await self.category_repo.get(category_id)
         if not cat:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
-        return await self.category_repo.delete(category_id)
+        deleted = await self.category_repo.delete(category_id)
+        await self.db.commit()
+        return deleted

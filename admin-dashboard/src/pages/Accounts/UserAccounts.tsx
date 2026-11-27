@@ -527,47 +527,47 @@ export default function UserAccounts() {
             </>
           }
         >
-          <div className="space-y-4 text-xs">
+          <div className="space-y-4">
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Full Name</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Full Name</label>
               <input
                 type="text"
                 placeholder="e.g. Tanjiro Kamado"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Email Address</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Email Address</label>
               <input
                 type="email"
                 placeholder="user@animestore.com"
                 value={formEmail}
                 onChange={(e) => setFormEmail(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Initial Password</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Initial Password</label>
               <input
                 type="password"
                 placeholder="Minimum 6 characters"
                 value={formPassword}
                 onChange={(e) => setFormPassword(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Role Assignment</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Role Assignment</label>
                 <select
                   value={formRole}
                   onChange={(e) => setFormRole(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   <option value="super_admin">⚡ Super Admin</option>
                   <option value="admin">🛡️ Administrator</option>
@@ -577,11 +577,11 @@ export default function UserAccounts() {
               </div>
 
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Account State</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Account State</label>
                 <select
                   value={formIsActive ? 'true' : 'false'}
                   onChange={(e) => setFormIsActive(e.target.value === 'true')}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   <option value="true">Active & Authorized</option>
                   <option value="false">Suspended / Inactive</option>
@@ -591,24 +591,24 @@ export default function UserAccounts() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Phone Number (optional)</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Phone Number (optional)</label>
                 <input
                   type="text"
                   placeholder="+855 12 345 678"
                   value={formPhone}
                   onChange={(e) => setFormPhone(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-text-primary mb-1">City / Branch Location</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">City / Branch Location</label>
                 <input
                   type="text"
                   placeholder="Phnom Penh"
                   value={formCity}
                   onChange={(e) => setFormCity(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
             </div>
@@ -634,24 +634,24 @@ export default function UserAccounts() {
             </>
           }
         >
-          <div className="space-y-4 text-xs">
+          <div className="space-y-4">
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Full Name</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Full Name</label>
               <input
                 type="text"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Role Assignment</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Role Assignment</label>
                 <select
                   value={formRole}
                   onChange={(e) => setFormRole(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   <option value="super_admin">⚡ Super Admin</option>
                   <option value="admin">🛡️ Administrator</option>
@@ -661,11 +661,11 @@ export default function UserAccounts() {
               </div>
 
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Account State</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Account State</label>
                 <select
                   value={formIsActive ? 'true' : 'false'}
                   onChange={(e) => setFormIsActive(e.target.value === 'true')}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   <option value="true">Active & Authorized</option>
                   <option value="false">Suspended</option>
@@ -675,22 +675,22 @@ export default function UserAccounts() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-text-primary mb-1">Phone Number</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Phone Number</label>
                 <input
                   type="text"
                   value={formPhone}
                   onChange={(e) => setFormPhone(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-text-primary mb-1">City</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">City</label>
                 <input
                   type="text"
                   value={formCity}
                   onChange={(e) => setFormCity(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
             </div>
@@ -716,30 +716,30 @@ export default function UserAccounts() {
             </>
           }
         >
-          <div className="space-y-4 text-xs">
-            <p className="text-text-muted">
+          <div className="space-y-4">
+            <p className="text-sm text-text-muted">
               Enter a new secure password for <strong className="text-text-primary">{resettingUser.email}</strong>.
             </p>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">New Password</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">New Password</label>
               <input
                 type="password"
                 placeholder="Minimum 6 characters"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Confirm New Password</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Confirm New Password</label>
               <input
                 type="password"
                 placeholder="Re-enter new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
           </div>

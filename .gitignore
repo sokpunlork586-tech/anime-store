@@ -25,9 +25,14 @@ __pycache__/
 # Local Data, Logs & Backups
 *.log
 *.sqlite
+*.sqlite3
 *.db
 backend/backups/
+backend/data/
+telegram_outbox.json
 .playwright-mcp/
+*.pem
+*.key
 
 # OS & Editor
 .DS_Store

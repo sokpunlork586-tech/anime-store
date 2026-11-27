@@ -76,7 +76,7 @@ export default function ImageUpload({ images, onChange, maxImages = 5, label = '
 
   return (
     <div className="space-y-3">
-      <label className="block text-sm font-medium text-text-primary">{label}</label>
+      <label className="block text-base font-semibold text-text-primary mb-1.5">{label}</label>
       <div className="flex flex-wrap gap-3">
         {images.map((img, idx) => (
           <div key={idx} className="relative group w-24 h-24 rounded-lg overflow-hidden border border-border-light bg-secondary/20">
@@ -121,7 +121,7 @@ export default function ImageUpload({ images, onChange, maxImages = 5, label = '
                 }
               }}
               placeholder="Or paste an image URL..."
-              className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="w-full pl-8 pr-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
           <button

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Boxes,
   FolderKanban,
   LayoutDashboard,
+  LogOut,
   Menu,
   Package,
   Settings,
@@ -15,6 +16,7 @@ import {
 import { BrandLogo } from '../components/BrandLogo';
 import { ToastContainer } from '../components/ToastContainer';
 import { useStore } from '../contexts/StoreContext';
+import { useAuth } from '../hooks/useAuth';
 
 const ADMIN_NAV = [
   { to: '/admin', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -29,8 +31,15 @@ const ADMIN_NAV = [
 export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { orders, products } = useStore();
+  const { user: authUser, logout } = useAuth();
+  const navigate = useNavigate();
   const pendingOrders = orders.filter((o) => o.status === 'Pending').length;
   const lowStockCount = products.filter((p) => p.stock <= 10).length;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen bg-[#FFF8EF] text-[#3D160F] flex">
@@ -172,12 +181,25 @@ export const AdminLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {authUser?.email && (
+              <span className="hidden md:inline-block text-xs font-medium text-[#7E5546] truncate max-w-[200px]">
+                {authUser.email}
+              </span>
+            )}
             <Link
               to="/shop"
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FFFDF9] border border-[#EAD7C3] text-xs font-semibold text-[#4D2318] hover:border-[#D96532] hover:text-[#D96532] transition-colors whitespace-nowrap"
             >
               <span>View Store</span>
             </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FFFDF9] border border-[#EAD7C3] text-xs font-semibold text-[#5E3224] hover:border-[#C62828] hover:text-[#C62828] transition-colors cursor-pointer whitespace-nowrap"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign Out</span>
+            </button>
           </div>
         </header>
 

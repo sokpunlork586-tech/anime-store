@@ -547,7 +547,7 @@ export default function BackupRestore() {
           </p>
 
           <div className="space-y-2.5">
-            <label className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+            <label className="block text-base font-semibold text-text-primary mb-1.5">
               Backup Scope
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -582,7 +582,7 @@ export default function BackupRestore() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-text-primary uppercase tracking-wider block mb-1">
+            <label className="block text-base font-semibold text-text-primary mb-1.5">
               Backup Notes / Description (Optional)
             </label>
             <input
@@ -590,7 +590,7 @@ export default function BackupRestore() {
               value={createNotes}
               onChange={(e) => setCreateNotes(e.target.value)}
               placeholder="e.g. Pre-holiday promotional catalog update"
-              className="w-full px-3.5 py-2 text-sm bg-background/50 border border-border-light rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
 
@@ -638,13 +638,13 @@ export default function BackupRestore() {
 
           {/* Frequency */}
           <div>
-            <label className="text-xs font-semibold text-text-primary uppercase tracking-wider block mb-1">
+            <label className="block text-base font-semibold text-text-primary mb-1.5">
               Backup Frequency
             </label>
             <select
               value={configFrequency}
               onChange={(e) => setConfigFrequency(e.target.value as any)}
-              className="w-full px-3.5 py-2.5 text-sm bg-background/50 border border-border-light rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 text-text-primary"
+              className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-text-primary"
             >
               <option value="daily">Daily (Every 24 Hours - Recommended)</option>
               <option value="weekly">Weekly (Every Sunday)</option>
@@ -654,7 +654,7 @@ export default function BackupRestore() {
 
           {/* Time Picker */}
           <div>
-            <label className="text-xs font-semibold text-text-primary uppercase tracking-wider block mb-1">
+            <label className="block text-base font-semibold text-text-primary mb-1.5">
               Execution Time
             </label>
             <div className="relative">
@@ -662,7 +662,7 @@ export default function BackupRestore() {
                 type="time"
                 value={configTime}
                 onChange={(e) => setConfigTime(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm bg-background/50 border border-border-light rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 text-text-primary"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-text-primary"
               />
             </div>
             <p className="text-[11px] text-text-muted mt-1">Recommended during low-traffic periods (e.g. 02:00 AM ICT)</p>
@@ -670,13 +670,13 @@ export default function BackupRestore() {
 
           {/* Retention Period */}
           <div>
-            <label className="text-xs font-semibold text-text-primary uppercase tracking-wider block mb-1">
+            <label className="block text-base font-semibold text-text-primary mb-1.5">
               Retention Policy (Keep Archives For)
             </label>
             <select
               value={configRetention}
               onChange={(e) => setConfigRetention(Number(e.target.value))}
-              className="w-full px-3.5 py-2.5 text-sm bg-background/50 border border-border-light rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 text-text-primary"
+              className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-text-primary"
             >
               <option value={7}>7 Days (1 Week)</option>
               <option value={14}>14 Days (2 Weeks)</option>

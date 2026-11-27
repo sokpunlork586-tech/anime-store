@@ -1,7 +1,9 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
 from app.core.config import settings
 from app.core.database import engine, Base, AsyncSessionLocal
 from app.core.init_db import init_db
@@ -17,6 +19,15 @@ async def lifespan(app: FastAPI):
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            if engine.dialect.name == "postgresql":
+                for stmt in (
+                    "ALTER TABLE products ALTER COLUMN image_url TYPE TEXT",
+                    "ALTER TABLE product_images ALTER COLUMN image_url TYPE TEXT",
+                    "ALTER TABLE categories ALTER COLUMN image TYPE TEXT",
+                    "ALTER TABLE customers ALTER COLUMN avatar TYPE TEXT",
+                    "ALTER TABLE order_items ALTER COLUMN image_url TYPE TEXT",
+                ):
+                    await conn.execute(text(stmt))
         logger.info("Database tables verified.")
 
         # Seed initial data
@@ -50,6 +61,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception(f"Unhandled error on {request.method} {request.url.path}")
+    origin = request.headers.get("origin")
+    headers = {}
+    if origin:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+        headers=headers,
+    )
 
 # API Routers
 app.include_router(api_router, prefix=settings.API_V1_STR)

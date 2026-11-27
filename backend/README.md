@@ -96,7 +96,19 @@ SECRET_KEY=your_production_secret_key_here
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_DAYS=7
 BACKEND_CORS_ORIGINS=["http://localhost:3000","http://localhost:3001","http://localhost:3002","http://localhost:5173"]
+
+# Telegram Order Notifications (Optional)
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_admin_chat_id
+TELEGRAM_ENABLED=true
 ```
+
+### Telegram Order Notification Setup
+1. Create a bot via `@BotFather` on Telegram and copy the Bot Token into `TELEGRAM_BOT_TOKEN`.
+2. Obtain your Admin Chat ID (e.g., via `@userinfobot` or `getUpdates` after messaging your bot) and set `TELEGRAM_CHAT_ID`.
+3. Set `TELEGRAM_ENABLED=true` in `.env` (never commit `.env` or expose `TELEGRAM_BOT_TOKEN` in frontend code).
+4. **Order Workflow**: Orders validate DB prices/stock and commit to PostgreSQL **before** sending the Telegram notification. If Telegram is temporarily unreachable, the order still succeeds and the notification is stored in the `notifications` outbox table (`status="failed"`) for retry via `POST /api/v1/notifications/retry-failed`.
+5. **Testing**: Use `POST /api/v1/notifications/test-telegram` or click **Test TG** in the Admin Dashboard header notifications dropdown.
 
 ### 4. Database Initialization
 When running the FastAPI server, the application's lifespan automatically verifies tables and seeds initial administrative accounts, categories, catalog items, and store settings.

@@ -1,9 +1,11 @@
+import json
 import logging
 from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.security import get_password_hash
+from app.schemas.setting import StoreSettingSchema
 from app.models.user import User
 from app.models.customer import Customer
 from app.models.category import Category
@@ -299,6 +301,15 @@ async def init_db(db: AsyncSession) -> None:
             for c_data in customers_seed:
                 db.add(Customer(**c_data, joined_at=now, last_order_at=now))
         db.add(SiteSetting(key="customers_seeded", value="true"))
+
+    # 7. Seed Default Store Settings (only keys missing in PostgreSQL site_settings)
+    default_settings = StoreSettingSchema().model_dump()
+    existing_settings_res = await db.execute(select(SiteSetting.key))
+    existing_keys = set(existing_settings_res.scalars().all())
+    for k, v in default_settings.items():
+        if k not in existing_keys and v is not None:
+            val_str = json.dumps(v) if isinstance(v, (dict, list)) else str(v)
+            db.add(SiteSetting(key=k, value=val_str))
 
     await db.commit()
     logger.info("Database seed initialized successfully.")

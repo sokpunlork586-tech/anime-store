@@ -43,3 +43,17 @@ async def test_user_registration_and_login(client: AsyncClient):
     user_data = me_res.json()
     assert user_data["email"] == "testuser@example.com"
     assert user_data["full_name"] == "Test User"
+
+
+@pytest.mark.asyncio
+async def test_firebase_role_fails_closed_without_valid_token(client: AsyncClient):
+    missing_res = await client.post("/api/v1/auth/firebase-role")
+    assert missing_res.status_code == 200
+    assert missing_res.json() == {"role": "customer", "verified": False}
+
+    invalid_res = await client.post(
+        "/api/v1/auth/firebase-role",
+        headers={"Authorization": "Bearer invalid.firebase.token"},
+    )
+    assert invalid_res.status_code == 200
+    assert invalid_res.json() == {"role": "customer", "verified": False}

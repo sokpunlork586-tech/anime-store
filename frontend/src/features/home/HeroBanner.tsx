@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { STORE_ASSETS } from '../../data/mockData';
+import { useStore } from '../../contexts/StoreContext';
 import { SafeImage } from '../../components/SafeImage';
 
 interface HeroSlide {
@@ -14,47 +14,53 @@ interface HeroSlide {
   imagePosition?: string;
 }
 
-const SLIDES: HeroSlide[] = [
-  {
-    id: 'universe',
-    title: 'Discover Your Favorite Anime Universe',
-    subtitle: 'Explore anime figures, manga collections, collectibles, and exclusive merchandise.',
-    primaryCta: { label: 'Shop Now', to: '/shop' },
-    secondaryCta: { label: 'Explore Collection', to: '/anime' },
-    image: STORE_ASSETS.heroMain,
-    imagePosition: 'object-right',
-  },
-  {
-    id: 'sakura-edition',
-    title: 'Curated Figures & Collector Editions',
-    subtitle: 'Hand-picked PVC statues, kimono editions, and museum-grade wall scrolls shipped with care.',
-    primaryCta: { label: 'Browse Figures', to: '/shop?category=anime-figures' },
-    secondaryCta: { label: 'New Arrivals', to: '/new-arrivals' },
-    image: STORE_ASSETS.promoBanner,
-    imagePosition: 'object-center',
-  },
-  {
-    id: 'manga-vault',
-    title: 'Build Your Dream Manga Library',
-    subtitle: 'Deluxe collector slipcase box sets, complete starter sagas, and full-color illustrated artbooks.',
-    primaryCta: { label: 'Shop Manga', to: '/manga' },
-    secondaryCta: { label: 'Join Anime Club', to: '/register' },
-    image: STORE_ASSETS.heroMain,
-    imagePosition: 'object-right',
-  },
-];
-
 export const HeroBanner: React.FC = () => {
+  const { settings, products } = useStore();
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const slides: HeroSlide[] = useMemo(() => {
+    const firstFigure = products.find((p) => p.image)?.image || '';
+    const mangaImg =
+      products.find((p) => p.categoryName.toLowerCase().includes('manga'))?.image || firstFigure;
+    return [
+      {
+        id: 'universe',
+        title: 'Discover Your Favorite Anime Universe',
+        subtitle: 'Explore anime figures, manga collections, collectibles, and exclusive merchandise.',
+        primaryCta: { label: 'Shop Now', to: '/shop' },
+        secondaryCta: { label: 'Explore Collection', to: '/anime' },
+        image: settings.heroBannerImage || firstFigure,
+        imagePosition: 'object-right',
+      },
+      {
+        id: 'sakura-edition',
+        title: 'Curated Figures & Collector Editions',
+        subtitle: 'Hand-picked PVC statues, kimono editions, and museum-grade wall scrolls shipped with care.',
+        primaryCta: { label: 'Browse Figures', to: '/shop?category=figures-statues' },
+        secondaryCta: { label: 'New Arrivals', to: '/new-arrivals' },
+        image: settings.promoBannerImage || firstFigure,
+        imagePosition: 'object-center',
+      },
+      {
+        id: 'manga-vault',
+        title: 'Build Your Dream Manga Library',
+        subtitle: 'Deluxe collector slipcase box sets, complete starter sagas, and full-color illustrated artbooks.',
+        primaryCta: { label: 'Shop Manga', to: '/manga' },
+        secondaryCta: { label: 'Join Anime Club', to: '/register' },
+        image: settings.heroBannerImage || mangaImg,
+        imagePosition: 'object-right',
+      },
+    ];
+  }, [settings.heroBannerImage, settings.promoBannerImage, products]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % SLIDES.length);
+      setActiveIndex((prev) => (prev + 1) % slides.length);
     }, 7000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [slides.length]);
 
-  const slide = SLIDES[activeIndex];
+  const slide = slides[activeIndex];
 
   return (
     <section
@@ -102,7 +108,7 @@ export const HeroBanner: React.FC = () => {
 
       {/* Carousel Dots */}
       <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
-        {SLIDES.map((s, idx) => (
+        {slides.map((s, idx) => (
           <button
             key={s.id}
             type="button"

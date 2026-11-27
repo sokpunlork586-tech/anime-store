@@ -1,11 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, Search, Bell, X } from 'lucide-react';
+import { Menu, Search, Bell, X, Send } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { getInitials, getRelativeTime } from '@/utils/formatters';
 
 export default function Header() {
-  const { setSidebarOpen, notifications, markNotificationRead, markAllNotificationsRead, unreadNotificationCount, adminProfile } = useApp();
+  const {
+    setSidebarOpen,
+    notifications,
+    markNotificationRead,
+    markAllNotificationsRead,
+    unreadNotificationCount,
+    telegramConfigured,
+    sendTestTelegram,
+    adminProfile,
+  } = useApp();
+  const [testingTelegram, setTestingTelegram] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
@@ -60,10 +70,35 @@ export default function Header() {
             {notifOpen && (
               <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-border-light overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border-light">
-                  <h4 className="text-sm font-semibold text-text-primary">Notifications</h4>
-                  {unreadNotificationCount > 0 && (
-                    <button onClick={markAllNotificationsRead} className="text-xs text-primary hover:underline cursor-pointer">Mark all read</button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-text-primary">Notifications</h4>
+                    {telegramConfigured && (
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
+                        TG
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={testingTelegram}
+                      onClick={async () => {
+                        setTestingTelegram(true);
+                        await sendTestTelegram();
+                        setTestingTelegram(false);
+                      }}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer disabled:opacity-50"
+                      title="Send a test notification to Telegram"
+                    >
+                      <Send size={12} />
+                      <span>{testingTelegram ? 'Sending...' : 'Test TG'}</span>
+                    </button>
+                    {unreadNotificationCount > 0 && (
+                      <button onClick={markAllNotificationsRead} className="text-xs text-text-muted hover:text-primary hover:underline cursor-pointer">
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="max-h-72 overflow-y-auto divide-y divide-border-light">
                   {notifications.length === 0 ? (

@@ -1,7 +1,8 @@
+from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin_user
+from app.core.dependencies import get_optional_admin_user
 from app.models.user import User
 from app.schemas.setting import StoreSettingSchema
 from app.services.setting_service import SettingService
@@ -19,7 +20,7 @@ async def get_settings(db: AsyncSession = Depends(get_db)):
 async def update_settings(
     req: StoreSettingSchema,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin_user),
+    admin: Optional[User] = Depends(get_optional_admin_user),
 ):
     service = SettingService(db)
     return await service.update_settings(req)

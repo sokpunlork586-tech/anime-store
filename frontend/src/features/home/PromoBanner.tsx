@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { STORE_ASSETS } from '../../data/mockData';
 import { useStore } from '../../contexts/StoreContext';
 import { SafeImage } from '../../components/SafeImage';
 
@@ -14,7 +13,7 @@ export const PromoBanner: React.FC = () => {
       className="mt-10 sm:mt-12 relative rounded-2xl sm:rounded-3xl overflow-hidden bg-[#F7E2CA] border border-[#ECD4B9] shadow-[0_8px_26px_rgba(61,22,15,0.07)] min-h-[190px] sm:min-h-[215px] flex items-center justify-center"
     >
       <SafeImage
-        src={STORE_ASSETS.promoBanner}
+        src={settings.promoBannerImage || ''}
         alt={settings.promoBannerTitle}
         className="absolute inset-0 w-full h-full object-cover object-center"
       />

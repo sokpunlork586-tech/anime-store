@@ -8,7 +8,7 @@ export const LoginPage: React.FC = () => {
   const { login } = useStore();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('sokha@animestore.com');
+  const [email, setEmail] = useState('john.doe@email.com');
   const [password, setPassword] = useState('anime123');
   const [error, setError] = useState('');
 
@@ -95,7 +95,7 @@ export const LoginPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-2.5">
             <button
               type="button"
-              onClick={() => quickLogin('sokha@animestore.com')}
+              onClick={() => quickLogin('john.doe@email.com')}
               className="py-2 px-3 rounded-xl bg-[#FFF8EF] border border-[#E7D2BC] hover:border-[#D96532] text-xs font-semibold text-[#3D160F] cursor-pointer"
             >
               Demo Customer

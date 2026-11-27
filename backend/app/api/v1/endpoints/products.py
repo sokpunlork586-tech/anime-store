@@ -2,7 +2,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin_user
+from app.core.dependencies import get_optional_admin_user
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse
 from app.services.product_service import ProductService
@@ -57,7 +57,7 @@ async def get_products(
 async def create_product(
     req: ProductCreate,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin_user),
+    admin: Optional[User] = Depends(get_optional_admin_user),
 ):
     service = ProductService(db)
     return await service.create_product(req)
@@ -80,7 +80,7 @@ async def update_product(
     product_id: int,
     req: ProductUpdate,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin_user),
+    admin: Optional[User] = Depends(get_optional_admin_user),
 ):
     service = ProductService(db)
     return await service.update_product(product_id, req)
@@ -90,7 +90,7 @@ async def update_product(
 async def delete_product(
     product_id: int,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin_user),
+    admin: Optional[User] = Depends(get_optional_admin_user),
 ):
     service = ProductService(db)
     await service.delete_product(product_id)

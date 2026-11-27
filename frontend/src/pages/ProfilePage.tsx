@@ -1,38 +1,53 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Award,
+  CheckCircle2,
   Heart,
   LogOut,
+  MailWarning,
   Package,
   Save,
   ShieldCheck,
   User as UserIcon,
 } from 'lucide-react';
 import { useStore } from '../contexts/StoreContext';
+import { useAuth } from '../hooks/useAuth';
 import { formatDate, formatPrice } from '../utils/format';
 import { SafeImage } from '../components/SafeImage';
 
 export const ProfilePage: React.FC = () => {
   const { currentUser, orders, wishlist, updateProfile, logout, settings } = useStore();
+  const { user: authUser, isAdmin, isEmailVerified, logout: firebaseLogout } = useAuth();
   const navigate = useNavigate();
 
+  const isSignedIn = Boolean(authUser || currentUser);
+  const displayName =
+    authUser?.displayName || currentUser?.name || authUser?.email?.split('@')[0] || 'Anime Collector';
+  const displayEmail = authUser?.email || currentUser?.email || '';
+  const joinedAt =
+    currentUser?.joinedAt || authUser?.metadata?.creationTime || new Date().toISOString();
+
   const [tab, setTab] = useState<'orders' | 'details'>('orders');
-  const [name, setName] = useState(currentUser?.name || '');
+  const [name, setName] = useState(displayName);
   const [phone, setPhone] = useState(currentUser?.phone || '');
   const [address, setAddress] = useState(currentUser?.address || '');
   const [city, setCity] = useState(currentUser?.city || '');
 
+  useEffect(() => {
+    setName((prev) => prev || displayName);
+  }, [displayName]);
+
   const myOrders = useMemo(() => {
-    if (!currentUser) return [];
+    if (!isSignedIn) return [];
     return orders.filter(
       (o) =>
-        o.customerId === currentUser.id ||
-        o.customerEmail.toLowerCase() === currentUser.email.toLowerCase()
+        (currentUser && o.customerId === currentUser.id) ||
+        (displayEmail && o.customerEmail.toLowerCase() === displayEmail.toLowerCase())
     );
-  }, [orders, currentUser]);
+  }, [orders, currentUser, isSignedIn, displayEmail]);
 
-  if (!currentUser) {
+  if (!isSignedIn) {
     return (
       <div className="rounded-3xl bg-[#FFFDF9] border border-[#EFE0CE] p-12 text-center max-w-lg mx-auto my-8">
         <h1 className="font-display text-2xl font-bold text-[#3D160F]">Sign In to View Profile</h1>
@@ -62,7 +77,8 @@ export const ProfilePage: React.FC = () => {
     updateProfile({ name, phone, address, city });
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await firebaseLogout();
     logout();
     navigate('/');
   };
@@ -73,22 +89,36 @@ export const ProfilePage: React.FC = () => {
       <div className="rounded-3xl bg-[#F7E5CE] border border-[#EAD3B8] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-[#D96532] text-white font-display text-2xl font-extrabold flex items-center justify-center shadow-sm shrink-0">
-            {currentUser.name.charAt(0).toUpperCase()}
+            {displayName.charAt(0).toUpperCase()}
           </div>
           <div>
             <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#3D160F]">
-              {currentUser.name}
+              {displayName}
             </h1>
             <p className="text-sm text-[#6B4235]">
-              {currentUser.email} · Member since {formatDate(currentUser.joinedAt)}
+              {displayEmail} · Member since {formatDate(joinedAt)}
             </p>
-            <div className="mt-1.5 flex items-center gap-3 text-xs font-semibold">
-              {currentUser.clubMember && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-3 text-xs font-semibold">
+              {authUser && (
+                isEmailVerified ? (
+                  <span className="inline-flex items-center gap-1 text-[#2E7D32]">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Email Verified
+                  </span>
+                ) : (
+                  <Link
+                    to="/verify-email"
+                    className="inline-flex items-center gap-1 text-[#B26A00] hover:underline"
+                  >
+                    <MailWarning className="w-3.5 h-3.5" /> Verify Email
+                  </Link>
+                )
+              )}
+              {currentUser?.clubMember && (
                 <span className="inline-flex items-center gap-1 text-[#C85322]">
                   <Award className="w-3.5 h-3.5" /> Anime Club ({settings.clubDiscountPercent}% Off)
                 </span>
               )}
-              {currentUser.role === 'admin' && (
+              {isAdmin && (
                 <Link
                   to="/admin"
                   className="inline-flex items-center gap-1 text-[#2E7D32] hover:underline"

@@ -1,8 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, Search, X, RotateCcw, Star } from 'lucide-react';
 import { useStore } from '../contexts/StoreContext';
 import { ProductCard } from '../components/ProductCard';
+import { productService } from '../services/product.service';
+import type { Product } from '../types';
+import { searchCatalogProducts } from '../utils/catalogSearch';
 import { formatPrice } from '../utils/format';
 
 type SortOption = 'featured' | 'newest' | 'price-asc' | 'price-desc' | 'rating';
@@ -16,14 +19,28 @@ export const ShopPage: React.FC = () => {
   const initialSeries = searchParams.get('series') || 'all';
   const initialSaleOnly = searchParams.get('sale') === 'true';
 
+  const catalogMaxPrice = useMemo(() => {
+    const highest = products.reduce((max, p) => Math.max(max, p.price), 0);
+    return Math.max(100, Math.ceil(highest / 10) * 10);
+  }, [products]);
+
   const [query, setQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedSeries, setSelectedSeries] = useState(initialSeries);
-  const [maxPrice, setMaxPrice] = useState(100);
+  const [maxPrice, setMaxPrice] = useState(catalogMaxPrice);
+  const userChangedMaxPriceRef = useRef(false);
   const [minRating, setMinRating] = useState(0);
   const [saleOnly, setSaleOnly] = useState(initialSaleOnly);
   const [sortBy, setSortBy] = useState<SortOption>('featured');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [remoteSearchItems, setRemoteSearchItems] = useState<Product[] | null>(null);
+  const [isSearchingDb, setIsSearchingDb] = useState(false);
+
+  useEffect(() => {
+    if (!userChangedMaxPriceRef.current) {
+      setMaxPrice(catalogMaxPrice);
+    }
+  }, [catalogMaxPrice]);
 
   const handleCategorySelect = (categorySlug: string) => {
     setSelectedCategory(categorySlug);
@@ -36,36 +53,105 @@ export const ShopPage: React.FC = () => {
     setSearchParams(next, { replace: true });
   };
 
+  const handleSearchChange = (nextQuery: string) => {
+    setQuery(nextQuery);
+    const next = new URLSearchParams(searchParams);
+    if (nextQuery.trim()) {
+      next.set('q', nextQuery);
+    } else {
+      next.delete('q');
+    }
+    setSearchParams(next, { replace: true });
+  };
+
   // Sync URL query params when navigated externally
-  React.useEffect(() => {
+  useEffect(() => {
     setQuery(searchParams.get('q') || '');
     setSelectedCategory(searchParams.get('category') || 'all');
     setSelectedSeries(searchParams.get('series') || 'all');
     setSaleOnly(searchParams.get('sale') === 'true');
   }, [searchParams]);
 
+  // Query PostgreSQL /api/v1/products when searching or filtering by category
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed && selectedCategory === 'all') {
+      setRemoteSearchItems(null);
+      setIsSearchingDb(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsSearchingDb(true);
+    const timer = window.setTimeout(() => {
+      const cat = selectedCategory !== 'all'
+        ? categories.find((c) => c.slug === selectedCategory || c.id === selectedCategory)
+        : undefined;
+
+      productService
+        .getProducts({
+          ...(trimmed ? { search: trimmed } : {}),
+          ...(cat ? { category_id: Number(cat.id) || undefined, category_slug: Number(cat.id) ? undefined : cat.slug } : selectedCategory !== 'all' ? { category_slug: selectedCategory } : {}),
+          status: 'active',
+          page_size: 100,
+        })
+        .then((res) => {
+          if (!cancelled) {
+            setRemoteSearchItems(res.items);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setRemoteSearchItems(null);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setIsSearchingDb(false);
+          }
+        });
+    }, trimmed ? 180 : 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [query, selectedCategory, categories]);
+
   const seriesList = useMemo(
-    () => Array.from(new Set(products.map((p) => p.series))).sort(),
+    () => Array.from(new Set(products.map((p) => p.series).filter(Boolean))).sort(),
     [products]
   );
 
-  const filteredProducts = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const list = products.filter((p) => {
-      if (q) {
-        const hit =
-          p.name.toLowerCase().includes(q) ||
-          p.series.toLowerCase().includes(q) ||
-          p.categoryName.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q);
-        if (!hit) return false;
-      }
+  const { filteredProducts, usedFuzzySearch, suggestedTerm } = useMemo(() => {
+    const q = query.trim();
+    let baseList = products;
+    let fuzzy = false;
+    let suggestion: string | null = null;
 
+    if (q) {
+      if (remoteSearchItems && remoteSearchItems.length > 0) {
+        baseList = remoteSearchItems;
+      } else {
+        const searchRes = searchCatalogProducts(products, q);
+        baseList = searchRes.items;
+        fuzzy = searchRes.usedFuzzy;
+        suggestion = searchRes.suggestedTerm;
+      }
+    } else if (selectedCategory !== 'all' && remoteSearchItems !== null) {
+      baseList = remoteSearchItems;
+    }
+
+    const list = baseList.filter((p) => {
       if (selectedCategory !== 'all') {
         const cat = categories.find(
           (c) => c.slug === selectedCategory || c.id === selectedCategory
         );
-        if (cat && p.categoryId !== cat.id) return false;
+        if (!cat) return false;
+        const matchesCat =
+          p.categoryId === cat.id ||
+          p.categoryName.toLowerCase() === cat.name.toLowerCase();
+        if (!matchesCat) return false;
       }
 
       if (selectedSeries !== 'all' && p.series !== selectedSeries) return false;
@@ -76,26 +162,38 @@ export const ShopPage: React.FC = () => {
       return true;
     });
 
+    const sorted = [...list];
     switch (sortBy) {
       case 'price-asc':
-        return [...list].sort((a, b) => a.price - b.price);
+        sorted.sort((a, b) => a.price - b.price);
+        break;
       case 'price-desc':
-        return [...list].sort((a, b) => b.price - a.price);
+        sorted.sort((a, b) => b.price - a.price);
+        break;
       case 'rating':
-        return [...list].sort((a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount);
+        sorted.sort((a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount);
+        break;
       case 'newest':
-        return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        sorted.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        break;
       case 'featured':
       default:
-        return [...list].sort((a, b) => Number(b.featured) - Number(a.featured));
+        sorted.sort((a, b) => Number(b.featured) - Number(a.featured));
+        break;
     }
-  }, [products, categories, query, selectedCategory, selectedSeries, maxPrice, minRating, saleOnly, sortBy]);
+
+    return {
+      filteredProducts: sorted,
+      usedFuzzySearch: fuzzy,
+      suggestedTerm: suggestion,
+    };
+  }, [products, remoteSearchItems, categories, query, selectedCategory, selectedSeries, maxPrice, minRating, saleOnly, sortBy]);
 
   const hasActiveFilters =
     query.trim() !== '' ||
     selectedCategory !== 'all' ||
     selectedSeries !== 'all' ||
-    maxPrice < 100 ||
+    maxPrice < catalogMaxPrice ||
     minRating > 0 ||
     saleOnly;
 
@@ -103,10 +201,12 @@ export const ShopPage: React.FC = () => {
     setQuery('');
     setSelectedCategory('all');
     setSelectedSeries('all');
-    setMaxPrice(100);
+    userChangedMaxPriceRef.current = false;
+    setMaxPrice(catalogMaxPrice);
     setMinRating(0);
     setSaleOnly(false);
     setSortBy('featured');
+    setRemoteSearchItems(null);
     setSearchParams({});
   };
 
@@ -118,15 +218,25 @@ export const ShopPage: React.FC = () => {
           Search Catalog
         </label>
         <div className="relative">
-          <Search className="w-4 h-4 text-[#8E6453] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#8E6453] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             id="shop-filter-search"
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Character, figure, manga..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#FFF8EF] border border-[#E7D2BC] text-sm text-[#3D160F] focus:outline-none focus:border-[#D96532]"
+            className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FFF8EF] border border-[#E7D2BC] text-sm text-[#3D160F] focus:outline-none focus:border-[#D96532]"
           />
+          {query.trim().length > 0 && (
+            <button
+              type="button"
+              onClick={() => handleSearchChange('')}
+              aria-label="Clear catalog search"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-[#8E6453] hover:text-[#3D160F] cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -198,16 +308,19 @@ export const ShopPage: React.FC = () => {
           id="max-price-range"
           type="range"
           min={10}
-          max={100}
+          max={catalogMaxPrice}
           step={5}
           value={maxPrice}
-          onChange={(e) => setMaxPrice(Number(e.target.value))}
+          onChange={(e) => {
+            userChangedMaxPriceRef.current = true;
+            setMaxPrice(Number(e.target.value));
+          }}
           className="w-full accent-[#D96532] cursor-pointer"
         />
         <div className="flex justify-between text-[11px] text-[#8E6453] mt-1 tabular-nums">
           <span>$10</span>
-          <span>$55</span>
-          <span>$100+</span>
+          <span>${Math.round((10 + catalogMaxPrice) / 2)}</span>
+          <span>${catalogMaxPrice}</span>
         </div>
       </div>
 
@@ -324,6 +437,7 @@ export const ShopPage: React.FC = () => {
               Showing <strong className="text-[#3D160F]">{filteredProducts.length}</strong> of{' '}
               {products.length} products
               {selectedSeries !== 'all' ? ` in ${selectedSeries}` : ''}
+              {isSearchingDb ? ' · Searching database...' : ''}
             </p>
             {hasActiveFilters && (
               <button
@@ -335,6 +449,22 @@ export const ShopPage: React.FC = () => {
               </button>
             )}
           </div>
+
+          {usedFuzzySearch && suggestedTerm && filteredProducts.length > 0 && (
+            <div className="mb-4 px-4 py-2.5 rounded-xl bg-[#F7E5CE]/70 border border-[#E7D2BC] text-xs sm:text-sm text-[#5A3224] flex flex-wrap items-center justify-between gap-2">
+              <span>
+                No exact match for &ldquo;<strong>{query.trim()}</strong>&rdquo;. Showing closest results for{' '}
+                <button
+                  type="button"
+                  onClick={() => handleSearchChange(suggestedTerm)}
+                  className="font-bold text-[#D96532] underline cursor-pointer"
+                >
+                  {suggestedTerm}
+                </button>
+                .
+              </span>
+            </div>
+          )}
 
           {filteredProducts.length === 0 ? (
             <div className="rounded-2xl bg-[#FFFDF9] border border-[#EFE0CE] p-12 text-center">

@@ -1,13 +1,31 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useStore } from '../contexts/StoreContext';
-import { ANIME_UNIVERSES } from '../data/mockData';
 import { SectionHeading } from '../components/SectionHeading';
 import { SafeImage } from '../components/SafeImage';
 
 export const AnimeCategoriesPage: React.FC = () => {
-  const { categories, products } = useStore();
+  const { categories, products, settings } = useStore();
+
+  const animeSeriesList = useMemo(() => {
+    const map = new Map<string, { name: string; count: number; image: string }>();
+    for (const p of products) {
+      const series = (p.series || '').trim();
+      if (!series) continue;
+      const existing = map.get(series);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        map.set(series, {
+          name: series,
+          count: 1,
+          image: p.image || settings.heroBannerImage || '',
+        });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  }, [products, settings.heroBannerImage]);
 
   return (
     <div className="pb-6 space-y-10">
@@ -21,7 +39,7 @@ export const AnimeCategoriesPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Browse by Anime Series */}
+      {/* Browse by Anime Series (from database products) */}
       <section>
         <SectionHeading
           title="Popular Anime Series"
@@ -29,8 +47,7 @@ export const AnimeCategoriesPage: React.FC = () => {
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {ANIME_UNIVERSES.map((universe) => {
-            const count = products.filter((p) => p.series === universe.name).length;
+          {animeSeriesList.map((universe) => {
             return (
               <Link
                 key={universe.name}
@@ -48,9 +65,11 @@ export const AnimeCategoriesPage: React.FC = () => {
                   <h3 className="font-display text-xl font-bold text-[#3D160F] group-hover:text-[#D96532] transition-colors">
                     {universe.name}
                   </h3>
-                  <p className="mt-1 text-xs text-[#724A3E] line-clamp-2">{universe.tagline}</p>
+                  <p className="mt-1 text-xs text-[#724A3E] line-clamp-2">
+                    Official {universe.name} merchandise & collectibles from store catalog.
+                  </p>
                   <div className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-[#D96532]">
-                    <span className="tabular-nums">{count} collectibles</span>
+                    <span className="tabular-nums">{universe.count} collectibles</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>

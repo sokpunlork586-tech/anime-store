@@ -40,6 +40,11 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-family-heading);
+  color: var(--color-text-primary);
+}
+
+input, select, textarea, button {
+  font-family: var(--font-family-body);
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }

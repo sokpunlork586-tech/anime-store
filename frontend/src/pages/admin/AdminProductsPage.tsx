@@ -1,32 +1,26 @@
 import React, { useMemo, useState } from 'react';
 import { Edit2, Plus, Search, Star, Trash2, X } from 'lucide-react';
 import { useStore } from '../../contexts/StoreContext';
-import { STORE_ASSETS } from '../../data/mockData';
 import { Product, ProductBadge } from '../../types';
 import { formatPrice } from '../../utils/format';
 import { SafeImage } from '../../components/SafeImage';
 import { ConfirmModal } from '../../components/ConfirmModal';
 
-const PRESET_IMAGES = [
-  { label: 'Warrior Figure (Goku)', url: STORE_ASSETS.warriorFigure },
-  { label: 'Kimono Figure (Nezuko)', url: STORE_ASSETS.kimonoFigure },
-  { label: 'Ninja Figure (Naruto)', url: STORE_ASSETS.ninjaFigure },
-  { label: 'Captain Figure (Luffy)', url: STORE_ASSETS.captainFigure },
-  { label: 'Swordsman Figure (Tanjiro)', url: STORE_ASSETS.swordsmanFigure },
-  { label: 'Manga Box Set', url: STORE_ASSETS.mangaCollection },
-  { label: 'Forest Spirit Plush', url: STORE_ASSETS.forestPlush },
-  { label: 'Lucky Tabby Neko Plush', url: STORE_ASSETS.plushCat },
-  { label: 'Star-Clasp Chibi Keychains', url: STORE_ASSETS.keychainCharm },
-  { label: 'Crimson Cloud Haori', url: STORE_ASSETS.cloudHaori },
-  { label: 'Rising Wave Streetwear Hoodie', url: STORE_ASSETS.hoodieStreetwear },
-  { label: 'Anime Enamel Pin Set', url: STORE_ASSETS.enamelPins },
-  { label: 'Accessories & Headband Pack', url: STORE_ASSETS.accessoriesPack },
-  { label: 'Pagoda Wall Scroll', url: STORE_ASSETS.wallScroll },
-  { label: 'Seven-Star Crystal Orb Lamp', url: STORE_ASSETS.collectibleLamp },
-];
-
 export const AdminProductsPage: React.FC = () => {
   const { products, categories, addProduct, updateProduct, deleteProduct } = useStore();
+
+  const presetImages = useMemo(() => {
+    const seen = new Set<string>();
+    const list: Array<{ label: string; url: string }> = [];
+    for (const p of products) {
+      if (p.image && !seen.has(p.image)) {
+        seen.add(p.image);
+        list.push({ label: p.name, url: p.image });
+      }
+    }
+    return list;
+  }, [products]);
+
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
@@ -37,13 +31,13 @@ export const AdminProductsPage: React.FC = () => {
   const [name, setName] = useState('');
   const [sku, setSku] = useState('');
   const [series, setSeries] = useState('');
-  const [categoryId, setCategoryId] = useState(categories[0]?.id || 'cat-figures');
+  const [categoryId, setCategoryId] = useState(categories[0]?.id || '');
   const [price, setPrice] = useState('29.99');
   const [originalPrice, setOriginalPrice] = useState('39.99');
   const [stock, setStock] = useState('20');
   const [rating, setRating] = useState('4.8');
   const [badge, setBadge] = useState<string>('');
-  const [image, setImage] = useState(STORE_ASSETS.warriorFigure);
+  const [image, setImage] = useState('');
   const [featured, setFeatured] = useState(true);
   const [isNewArrival, setIsNewArrival] = useState(true);
   const [description, setDescription] = useState('');
@@ -66,13 +60,13 @@ export const AdminProductsPage: React.FC = () => {
     setName('');
     setSku(`AS-NEW-${Math.floor(100 + Math.random() * 900)}`);
     setSeries('Naruto Shippuden');
-    setCategoryId(categories[0]?.id || 'cat-figures');
+    setCategoryId(categories[0]?.id || '');
     setPrice('29.99');
     setOriginalPrice('36.99');
     setStock('25');
     setRating('4.8');
     setBadge('New Arrival');
-    setImage(STORE_ASSETS.ninjaFigure);
+    setImage(presetImages[0]?.url || '');
     setFeatured(true);
     setIsNewArrival(true);
     setDescription('Officially licensed anime collectible crafted with collector-grade finish.');
@@ -112,8 +106,8 @@ export const AdminProductsPage: React.FC = () => {
       price: parsedPrice,
       originalPrice: parsedOriginal && parsedOriginal > parsedPrice ? parsedOriginal : undefined,
       rating: Math.min(5, Math.max(1, Number(rating) || 4.8)),
-      image: image || STORE_ASSETS.warriorFigure,
-      gallery: [image || STORE_ASSETS.warriorFigure],
+      image: image || presetImages[0]?.url || '',
+      gallery: image ? [image] : [],
       badge: (badge || null) as ProductBadge,
       featured,
       isNewArrival,
@@ -436,7 +430,7 @@ export const AdminProductsPage: React.FC = () => {
                   onChange={(e) => setImage(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl bg-[#FFF8EF] border border-[#E7D2BC] text-sm"
                 >
-                  {PRESET_IMAGES.map((img) => (
+                  {presetImages.map((img) => (
                     <option key={img.url} value={img.url}>
                       {img.label}
                     </option>

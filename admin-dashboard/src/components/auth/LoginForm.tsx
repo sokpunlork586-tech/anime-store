@@ -115,25 +115,6 @@ export default function LoginForm() {
         </Link>
       </div>
 
-      {/* Demo Credentials Helper Pill */}
-      <div className="bg-secondary/40 border border-[#F0D9C4] rounded-xl px-3 py-1.5 text-xs flex items-center justify-between text-text-secondary">
-        <div>
-          <span className="font-semibold text-text-primary">Admin Demo:</span>{' '}
-          <code className="text-primary font-mono font-bold">Admin123456!</code>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setEmail('admin@animestore.com');
-            setPassword('Admin123456!');
-            setErrors({});
-          }}
-          className="text-primary hover:text-primary-dark font-semibold text-[11px] underline cursor-pointer"
-        >
-          Auto-fill
-        </button>
-      </div>
-
       {/* Login Button */}
       <button
         type="submit"

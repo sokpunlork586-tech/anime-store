@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, Store, Globe } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import Button from '@/components/common/Button';
@@ -18,6 +18,21 @@ export default function StoreInformation() {
     twitter: settings.socialMedia?.twitter || '',
     youtube: settings.socialMedia?.youtube || '',
   });
+
+  useEffect(() => {
+    setStoreForm({
+      storeDescription: settings.storeDescription || '',
+      email: settings.email || '',
+      phone: settings.phone || '',
+      address: settings.address || '',
+      city: settings.city || '',
+      country: settings.country || '',
+      facebook: settings.socialMedia?.facebook || '',
+      instagram: settings.socialMedia?.instagram || '',
+      twitter: settings.socialMedia?.twitter || '',
+      youtube: settings.socialMedia?.youtube || '',
+    });
+  }, [settings]);
 
   const handleSaveStore = (e: React.FormEvent) => {
     e.preventDefault();

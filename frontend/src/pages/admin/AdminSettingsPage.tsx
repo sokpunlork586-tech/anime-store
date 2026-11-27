@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RotateCcw, Save } from 'lucide-react';
 import { useStore } from '../../contexts/StoreContext';
-import { INITIAL_SETTINGS } from '../../data/mockData';
 
 export const AdminSettingsPage: React.FC = () => {
   const { settings, updateSettings } = useStore();
   const [form, setForm] = useState(settings);
+
+  useEffect(() => {
+    setForm(settings);
+  }, [settings]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -13,8 +16,7 @@ export const AdminSettingsPage: React.FC = () => {
   };
 
   const handleReset = () => {
-    setForm(INITIAL_SETTINGS);
-    updateSettings(INITIAL_SETTINGS);
+    setForm(settings);
   };
 
   return (

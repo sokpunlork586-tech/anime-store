@@ -1,23 +1,31 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Edit2, Plus, Trash2, X } from 'lucide-react';
 import { useStore } from '../../contexts/StoreContext';
-import { STORE_ASSETS } from '../../data/mockData';
 import { Category } from '../../types';
 import { SafeImage } from '../../components/SafeImage';
 import { ConfirmModal } from '../../components/ConfirmModal';
 
-const CATEGORY_ARTWORKS = [
-  { label: 'Ninja Figure', url: STORE_ASSETS.ninjaFigure },
-  { label: 'Manga Collection', url: STORE_ASSETS.mangaCollection },
-  { label: 'Forest Spirit Plush', url: STORE_ASSETS.forestPlush },
-  { label: 'Accessories & Keychains', url: STORE_ASSETS.accessoriesPack },
-  { label: 'Pagoda Wall Scroll', url: STORE_ASSETS.wallScroll },
-  { label: 'Crimson Cloud Haori', url: STORE_ASSETS.cloudHaori },
-  { label: 'Warrior Figure', url: STORE_ASSETS.warriorFigure },
-];
-
 export const AdminCategoriesPage: React.FC = () => {
   const { categories, products, addCategory, updateCategory, deleteCategory } = useStore();
+
+  const categoryArtworks = useMemo(() => {
+    const seen = new Set<string>();
+    const list: Array<{ label: string; url: string }> = [];
+    for (const p of products) {
+      if (p.image && !seen.has(p.image)) {
+        seen.add(p.image);
+        list.push({ label: p.name, url: p.image });
+      }
+    }
+    for (const c of categories) {
+      if (c.image && !seen.has(c.image)) {
+        seen.add(c.image);
+        list.push({ label: c.name, url: c.image });
+      }
+    }
+    return list;
+  }, [products, categories]);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
@@ -25,7 +33,7 @@ export const AdminCategoriesPage: React.FC = () => {
   const [name, setName] = useState('');
   const [shortName, setShortName] = useState('');
   const [description, setDescription] = useState('');
-  const [image, setImage] = useState(STORE_ASSETS.ninjaFigure);
+  const [image, setImage] = useState('');
   const [accentBg, setAccentBg] = useState('#F9E5CD');
 
   const openCreate = () => {
@@ -33,7 +41,7 @@ export const AdminCategoriesPage: React.FC = () => {
     setName('');
     setShortName('');
     setDescription('');
-    setImage(STORE_ASSETS.ninjaFigure);
+    setImage(categoryArtworks[0]?.url || '');
     setAccentBg('#F9E5CD');
     setModalOpen(true);
   };
@@ -201,7 +209,7 @@ export const AdminCategoriesPage: React.FC = () => {
                   onChange={(e) => setImage(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl bg-[#FFF8EF] border border-[#E7D2BC] text-sm"
                 >
-                  {CATEGORY_ARTWORKS.map((art) => (
+                  {categoryArtworks.map((art) => (
                     <option key={art.url} value={art.url}>
                       {art.label}
                     </option>

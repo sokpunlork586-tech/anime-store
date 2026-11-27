@@ -124,7 +124,7 @@ export default function ProductForm() {
               </h3>
 
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">
+                <label className="block text-base font-semibold text-text-primary mb-1.5">
                   Product Name <span className="text-danger">*</span>
                 </label>
                 <input
@@ -132,7 +132,7 @@ export default function ProductForm() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Goku Super Saiyan Figure"
-                  className={`w-full px-3.5 py-2 text-sm bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 ${
+                  className={`w-full px-4 py-2.5 text-base sm:text-sm bg-white border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                     errors.name ? 'border-danger' : 'border-border focus:border-primary'
                   }`}
                 />
@@ -140,7 +140,7 @@ export default function ProductForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">
+                <label className="block text-base font-semibold text-text-primary mb-1.5">
                   Description <span className="text-danger">*</span>
                 </label>
                 <textarea
@@ -148,7 +148,7 @@ export default function ProductForm() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Detailed product description..."
-                  className={`w-full px-3.5 py-2 text-sm bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 ${
+                  className={`w-full px-4 py-2.5 text-base sm:text-sm bg-white border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                     errors.description ? 'border-danger' : 'border-border focus:border-primary'
                   }`}
                 />
@@ -169,7 +169,7 @@ export default function ProductForm() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">
+                  <label className="block text-base font-semibold text-text-primary mb-1.5">
                     Price ($) <span className="text-danger">*</span>
                   </label>
                   <input
@@ -178,7 +178,7 @@ export default function ProductForm() {
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     placeholder="29.99"
-                    className={`w-full px-3.5 py-2 text-sm bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 ${
+                    className={`w-full px-4 py-2.5 text-base sm:text-sm bg-white border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                       errors.price ? 'border-danger' : 'border-border focus:border-primary'
                     }`}
                   />
@@ -186,7 +186,7 @@ export default function ProductForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">
+                  <label className="block text-base font-semibold text-text-primary mb-1.5">
                     Compare At Price ($)
                   </label>
                   <input
@@ -195,12 +195,12 @@ export default function ProductForm() {
                     value={compareAtPrice}
                     onChange={(e) => setCompareAtPrice(e.target.value)}
                     placeholder="39.99 (Optional discount)"
-                    className="w-full px-3.5 py-2 text-sm bg-white border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">
+                  <label className="block text-base font-semibold text-text-primary mb-1.5">
                     SKU <span className="text-danger">*</span>
                   </label>
                   <input
@@ -208,7 +208,7 @@ export default function ProductForm() {
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
                     placeholder="FIG-001"
-                    className={`w-full px-3.5 py-2 text-sm bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 ${
+                    className={`w-full px-4 py-2.5 text-base sm:text-sm bg-white border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                       errors.sku ? 'border-danger' : 'border-border focus:border-primary'
                     }`}
                   />
@@ -216,7 +216,7 @@ export default function ProductForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">
+                  <label className="block text-base font-semibold text-text-primary mb-1.5">
                     Stock Quantity <span className="text-danger">*</span>
                   </label>
                   <input
@@ -224,7 +224,7 @@ export default function ProductForm() {
                     value={stock}
                     onChange={(e) => setStock(e.target.value)}
                     placeholder="10"
-                    className={`w-full px-3.5 py-2 text-sm bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 ${
+                    className={`w-full px-4 py-2.5 text-base sm:text-sm bg-white border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                       errors.stock ? 'border-danger' : 'border-border focus:border-primary'
                     }`}
                   />
@@ -242,11 +242,11 @@ export default function ProductForm() {
               </h3>
 
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">Status</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Status</label>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as 'active' | 'draft' | 'archived')}
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   <option value="active">Active (Published)</option>
                   <option value="draft">Draft (Hidden)</option>
@@ -255,11 +255,11 @@ export default function ProductForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">Category</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Category</label>
                 <select
                   value={categoryId}
                   onChange={(e) => handleCategoryChange(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -268,13 +268,13 @@ export default function ProductForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">Tags (comma-separated)</label>
+                <label className="block text-base font-semibold text-text-primary mb-1.5">Tags (comma-separated)</label>
                 <input
                   type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                   placeholder="anime, figure, limited"
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
             </div>

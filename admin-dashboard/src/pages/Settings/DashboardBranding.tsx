@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Save, Palette, Upload, RefreshCw,
 } from 'lucide-react';
@@ -14,6 +14,14 @@ export default function DashboardBranding() {
     storeTagline: settings.storeTagline || 'Dream • Collect • Enjoy',
     storeLogo: settings.storeLogo || '',
   });
+
+  useEffect(() => {
+    setBrandingForm({
+      storeName: settings.storeName || 'Anime Store',
+      storeTagline: settings.storeTagline || 'Dream • Collect • Enjoy',
+      storeLogo: settings.storeLogo || '',
+    });
+  }, [settings.storeName, settings.storeTagline, settings.storeLogo]);
   const [logoUrlInput, setLogoUrlInput] = useState('');
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -131,14 +139,14 @@ export default function DashboardBranding() {
               Upload Logo File (SVG / PNG)
             </Button>
 
-            <Button
+            {/* <Button
               type="button"
               variant="ghost"
               onClick={() => setBrandingForm((prev) => ({ ...prev, storeLogo: logoPresets[0].svgDataUri }))}
               icon={<RefreshCw size={16} />}
             >
               Reset to Reference Anime Cat
-            </Button>
+            </Button> */}
           </div>
 
           {/* Direct Image URL input */}
@@ -148,7 +156,7 @@ export default function DashboardBranding() {
               value={logoUrlInput}
               onChange={(e) => setLogoUrlInput(e.target.value)}
               placeholder="Or paste external logo image URL..."
-              className="flex-1 px-4 py-2.5 text-sm bg-background/50 border border-border-light rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="flex-1 px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
             <Button
               type="button"
@@ -168,7 +176,7 @@ export default function DashboardBranding() {
 
           {/* Preset Logo Selection */}
           <div className="space-y-3 pt-3 border-t border-border-light">
-            <label className="text-sm font-bold text-text-primary uppercase tracking-wider block">
+            <label className="block text-base font-semibold text-text-primary">
               Choose from Japanese Anime Logo Presets
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">

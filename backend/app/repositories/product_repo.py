@@ -1,5 +1,5 @@
 from typing import Optional, List, Tuple
-from sqlalchemy import select, func, desc, asc
+from sqlalchemy import select, func, desc, asc, cast, String
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.product import Product
@@ -86,15 +86,21 @@ class ProductRepository(BaseRepository[Product]):
             count_query = count_query.where(Product.price <= max_price)
 
         if search:
-            search_pattern = f"%{search}%"
-            search_cond = (
-                Product.name.ilike(search_pattern)
-                | Product.sku.ilike(search_pattern)
-                | Product.series.ilike(search_pattern)
-                | Product.description.ilike(search_pattern)
-            )
-            query = query.where(search_cond)
-            count_query = count_query.where(search_cond)
+            tokens = [t.strip() for t in search.split() if t.strip()]
+            for token in tokens:
+                search_pattern = f"%{token}%"
+                search_cond = (
+                    Product.name.ilike(search_pattern)
+                    | Product.sku.ilike(search_pattern)
+                    | Product.series.ilike(search_pattern)
+                    | Product.description.ilike(search_pattern)
+                    | cast(Product.tags, String).ilike(search_pattern)
+                    | Product.category.has(
+                        Category.name.ilike(search_pattern) | Category.slug.ilike(search_pattern)
+                    )
+                )
+                query = query.where(search_cond)
+                count_query = count_query.where(search_cond)
 
         total_res = await self.db.execute(count_query)
         total = total_res.scalar() or 0

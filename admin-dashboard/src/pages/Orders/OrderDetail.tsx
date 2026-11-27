@@ -22,7 +22,7 @@ export default function OrderDetail() {
   if (!order) {
     return (
       <div className="text-center py-16">
-        <h2 className="text-xl font-bold font-heading text-text-primary">Order Not Found</h2>
+        <h2 className="text-[24px] font-semibold text-text-primary">Order Not Found</h2>
         <p className="text-sm text-text-muted mt-1">The requested order does not exist or has been deleted.</p>
         <Link to="/orders" className="mt-4 inline-block">
           <Button variant="secondary">Back to Orders</Button>

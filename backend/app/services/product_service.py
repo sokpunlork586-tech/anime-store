@@ -1,5 +1,7 @@
+import uuid
 from typing import Optional, List, Tuple
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.product import Product
 from app.models.product_image import ProductImage
@@ -71,15 +73,20 @@ class ProductService:
         if not category:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid category_id")
 
-        existing_sku = await self.product_repo.get_by_sku(req.sku)
+        existing_sku = await self.product_repo.get_by_sku(req.sku.strip())
         if existing_sku:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="SKU already exists")
 
+        slug = req.slug.strip() or f"product-{uuid.uuid4().hex[:8]}"
+        existing_slug = await self.product_repo.get_by_slug(slug)
+        if existing_slug:
+            slug = f"{slug[:240]}-{uuid.uuid4().hex[:6]}"
+
         new_prod = Product(
-            sku=req.sku.strip(),
-            name=req.name.strip(),
-            slug=req.slug.strip(),
-            series=req.series or "",
+            sku=req.sku.strip()[:50],
+            name=req.name.strip()[:255],
+            slug=slug[:300],
+            series=(req.series or "")[:100],
             category_id=req.category_id,
             price=req.price,
             original_price=req.original_price,
@@ -87,7 +94,7 @@ class ProductService:
             review_count=req.review_count or 0,
             units_sold=req.units_sold or 0,
             image_url=req.image_url or (req.images[0] if req.images else ""),
-            badge=req.badge,
+            badge=req.badge[:50] if req.badge else None,
             featured=req.featured or False,
             is_new_arrival=req.is_new_arrival or False,
             stock_quantity=req.stock_quantity or 0,
@@ -97,30 +104,40 @@ class ProductService:
             variants=req.variants or [],
             tags=req.tags or [],
         )
-        created = await self.product_repo.create(new_prod)
+        try:
+            created = await self.product_repo.create(new_prod)
 
-        # Attach images if provided
-        if req.images:
-            for idx, img_url in enumerate(req.images):
-                img = ProductImage(
-                    product_id=created.id,
-                    image_url=img_url,
-                    is_primary=(idx == 0),
-                    display_order=idx,
-                )
-                self.db.add(img)
+            # Attach images if provided
+            if req.images:
+                for idx, img_url in enumerate(req.images):
+                    if not img_url:
+                        continue
+                    img = ProductImage(
+                        product_id=created.id,
+                        image_url=img_url,
+                        is_primary=(idx == 0),
+                        display_order=idx,
+                    )
+                    self.db.add(img)
 
-        # Create linked inventory record
-        inv_status = "out_of_stock" if created.stock_quantity == 0 else "low_stock" if created.stock_quantity <= 10 else "in_stock"
-        inv = Inventory(
-            product_id=created.id,
-            current_stock=created.stock_quantity,
-            min_stock=10,
-            max_stock=100,
-            status=inv_status,
-        )
-        self.db.add(inv)
-        await self.db.flush()
+            # Create linked inventory record
+            inv_status = "out_of_stock" if created.stock_quantity == 0 else "low_stock" if created.stock_quantity <= 10 else "in_stock"
+            inv = Inventory(
+                product_id=created.id,
+                current_stock=created.stock_quantity,
+                min_stock=10,
+                max_stock=100,
+                status=inv_status,
+            )
+            self.db.add(inv)
+            await self.db.flush()
+            await self.db.commit()
+        except IntegrityError as exc:
+            await self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Product with this SKU or slug already exists",
+            ) from exc
 
         loaded = await self.product_repo.get_with_details(created.id)
         return self._to_response(loaded)
@@ -142,6 +159,8 @@ class ProductService:
             setattr(product, k, v)
 
         if images is not None:
+            if "image_url" not in update_dict:
+                product.image_url = images[0] if images else ""
             # Replace images
             for img in list(product.images):
                 await self.db.delete(img)
@@ -161,14 +180,17 @@ class ProductService:
             inv.status = "out_of_stock" if inv.current_stock == 0 else "low_stock" if inv.current_stock <= inv.min_stock else "in_stock"
 
         await self.db.flush()
-        await self.db.refresh(product)
-        return self._to_response(product)
+        await self.db.commit()
+        loaded = await self.product_repo.get_with_details(product.id)
+        return self._to_response(loaded)
 
     async def delete_product(self, product_id: int) -> bool:
         product = await self.product_repo.get(product_id)
         if not product:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
-        return await self.product_repo.delete(product_id)
+        deleted = await self.product_repo.delete(product_id)
+        await self.db.commit()
+        return deleted
 
     async def filter_products(self, **kwargs) -> Tuple[List[ProductResponse], int]:
         products, total = await self.product_repo.filter_products(**kwargs)

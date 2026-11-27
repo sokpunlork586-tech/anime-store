@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { AppContext, useApp } from './appContextInstance';
 import type {
   Product, Category, Order, Customer, Review, InventoryItem,
   StockMovement, StoreSettings, Notification, ToastMessage, AdminProfile,
@@ -8,6 +9,10 @@ import type {
 } from '@/types';
 import { ordersApi } from '@/services/ordersApi';
 import { customersApi } from '@/services/customersApi';
+import { notificationsApi } from '@/services/notificationsApi';
+import { settingsApi } from '@/services/settingsApi';
+import { categoriesApi } from '@/services/categoriesApi';
+import { productsApi } from '@/services/productsApi';
 import { playOrderNotificationSound } from '@/utils/soundService';
 import {
   initialProducts, initialCategories, initialOrders, initialCustomers,
@@ -25,7 +30,7 @@ import {
 import { getFromStorage, setToStorage } from '@/utils/localStorage';
 import { generateId } from '@/utils/formatters';
 
-interface AppContextType {
+export interface AppContextType {
   // Sidebar
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
@@ -77,6 +82,9 @@ interface AppContextType {
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
   unreadNotificationCount: number;
+  telegramConfigured: boolean;
+  sendTestTelegram: () => Promise<void>;
+  refreshNotifications: () => Promise<void>;
   // Authentication
   isAuthenticated: boolean;
   login: (password: string) => boolean;
@@ -114,13 +122,9 @@ interface AppContextType {
   restoreFromUpload: (filename: string, contentStr: string) => void;
 }
 
-const AppContext = createContext<AppContextType | null>(null);
+export { useApp };
 
-export function useApp(): AppContextType {
-  const ctx = useContext(AppContext);
-  if (!ctx) throw new Error('useApp must be used within AppProvider');
-  return ctx;
-}
+let activeCatalogSyncPromise: Promise<void> | null = null;
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -151,6 +155,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<StoreSettings>(() => getFromStorage('settings', initialSettings));
   const [adminProfile, setAdminProfile] = useState<AdminProfile>(() => getFromStorage('admin_profile', defaultAdminProfile));
   const [notifications, setNotifications] = useState<Notification[]>(() => getFromStorage('notifications', initialNotifications));
+  const [telegramConfigured, setTelegramConfigured] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => getFromStorage('auth_logged_in', false));
   const [authBackground, setAuthBackgroundState] = useState<string>(() => getFromStorage('auth_bg', 'default'));
 
@@ -187,7 +192,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Products
   const addProduct = (data: Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'rating' | 'reviewCount' | 'unitsSold'>) => {
     const now = new Date().toISOString().split('T')[0];
-    const p: Product = { ...data, id: generateId(), rating: 0, reviewCount: 0, unitsSold: 0, createdAt: now, updatedAt: now };
+    const tempId = generateId();
+    const p: Product = { ...data, id: tempId, rating: 0, reviewCount: 0, unitsSold: 0, createdAt: now, updatedAt: now };
     persist('products', setProducts)((prev: Product[]) => [p, ...prev]);
     // Add inventory item
     const inv: InventoryItem = {
@@ -197,7 +203,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
       lastRestocked: now, updatedAt: now,
     };
     persist('inventory', setInventory)((prev: InventoryItem[]) => [inv, ...prev]);
-    addToast('Product added successfully', 'success');
+
+    productsApi
+      .createProduct(data)
+      .then((saved) => {
+        persist('products', setProducts)((prev: Product[]) =>
+          prev.map((item) => (item.id === tempId ? saved : item))
+        );
+        persist('inventory', setInventory)((prev: InventoryItem[]) =>
+          prev.map((item) => (item.productId === tempId ? { ...item, productId: saved.id } : item))
+        );
+        addToast('Product saved to database', 'success');
+        broadcastCatalogUpdated();
+        categoriesApi
+          .getCategories()
+          .then((cats) => {
+            setCategories(cats);
+            setToStorage('categories', cats);
+          })
+          .catch(() => {});
+      })
+      .catch((err) => {
+        console.error('[Admin] Backend product create failed:', err);
+        addToast(
+          err instanceof Error ? `Database error: ${err.message}` : 'Failed to save product to database',
+          'error'
+        );
+      });
   };
   const updateProduct = (id: string, data: Partial<Product>) => {
     persist('products', setProducts)((prev: Product[]) => prev.map(p => p.id === id ? { ...p, ...data, updatedAt: new Date().toISOString().split('T')[0] } : p));
@@ -217,27 +249,128 @@ export function AppProvider({ children }: { children: ReactNode }) {
         )
       );
     }
-    addToast('Product updated successfully', 'success');
+
+    productsApi
+      .updateProduct(id, data)
+      .then((saved) => {
+        if (saved) {
+          persist('products', setProducts)((prev: Product[]) =>
+            prev.map((p) => (p.id === id ? saved : p))
+          );
+        }
+        addToast('Product updated in database', 'success');
+        broadcastCatalogUpdated();
+        categoriesApi
+          .getCategories()
+          .then((cats) => {
+            setCategories(cats);
+            setToStorage('categories', cats);
+          })
+          .catch(() => {});
+      })
+      .catch((err) => {
+        console.error('[Admin] Backend product update failed:', err);
+        addToast(
+          err instanceof Error ? `Database error: ${err.message}` : 'Failed to update product in database',
+          'error'
+        );
+      });
   };
   const deleteProduct = (id: string) => {
     persist('products', setProducts)((prev: Product[]) => prev.filter(p => p.id !== id));
     persist('inventory', setInventory)((prev: InventoryItem[]) => prev.filter(i => i.productId !== id));
-    addToast('Product deleted', 'success');
+
+    productsApi
+      .deleteProduct(id)
+      .then(() => {
+        addToast('Product deleted from database', 'success');
+        broadcastCatalogUpdated();
+        categoriesApi
+          .getCategories()
+          .then((cats) => {
+            setCategories(cats);
+            setToStorage('categories', cats);
+          })
+          .catch(() => {});
+      })
+      .catch((err) => {
+        console.error('[Admin] Backend product delete failed:', err);
+        addToast(
+          err instanceof Error ? `Database error: ${err.message}` : 'Failed to delete product from database',
+          'error'
+        );
+      });
+  };
+
+  const broadcastCatalogUpdated = () => {
+    try {
+      const channel = new BroadcastChannel('anime_store_channel');
+      channel.postMessage({ type: 'CATALOG_UPDATED' });
+      channel.close();
+    } catch {}
   };
 
   // Categories
   const addCategory = (data: Omit<Category, 'id' | 'createdAt' | 'productCount'>) => {
-    const c: Category = { ...data, id: generateId(), productCount: 0, createdAt: new Date().toISOString().split('T')[0] };
+    const tempId = generateId();
+    const c: Category = { ...data, id: tempId, productCount: 0, createdAt: new Date().toISOString().split('T')[0] };
     persist('categories', setCategories)((prev: Category[]) => [c, ...prev]);
-    addToast('Category added successfully', 'success');
+
+    categoriesApi
+      .createCategory(data)
+      .then((saved) => {
+        persist('categories', setCategories)((prev: Category[]) =>
+          prev.map((item) => (item.id === tempId ? saved : item))
+        );
+        addToast('Category saved to database', 'success');
+        broadcastCatalogUpdated();
+      })
+      .catch((err) => {
+        console.error('[Admin] Backend category create failed:', err);
+        addToast(
+          err instanceof Error ? `Database error: ${err.message}` : 'Failed to save category to database',
+          'error'
+        );
+      });
   };
   const updateCategory = (id: string, data: Partial<Category>) => {
     persist('categories', setCategories)((prev: Category[]) => prev.map(c => c.id === id ? { ...c, ...data } : c));
-    addToast('Category updated successfully', 'success');
+
+    categoriesApi
+      .updateCategory(id, data)
+      .then((saved) => {
+        if (saved) {
+          persist('categories', setCategories)((prev: Category[]) =>
+            prev.map((c) => (c.id === id ? saved : c))
+          );
+        }
+        addToast('Category updated in database', 'success');
+        broadcastCatalogUpdated();
+      })
+      .catch((err) => {
+        console.error('[Admin] Backend category update failed:', err);
+        addToast(
+          err instanceof Error ? `Database error: ${err.message}` : 'Failed to update category in database',
+          'error'
+        );
+      });
   };
   const deleteCategory = (id: string) => {
     persist('categories', setCategories)((prev: Category[]) => prev.filter(c => c.id !== id));
-    addToast('Category deleted', 'success');
+
+    categoriesApi
+      .deleteCategory(id)
+      .then(() => {
+        addToast('Category deleted from database', 'success');
+        broadcastCatalogUpdated();
+      })
+      .catch((err) => {
+        console.error('[Admin] Backend category delete failed:', err);
+        addToast(
+          err instanceof Error ? `Database error: ${err.message}` : 'Failed to delete category from database',
+          'error'
+        );
+      });
   };
 
   // Orders & Live Notifications
@@ -327,10 +460,138 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const syncNotificationsFromBackend = useCallback(async () => {
+    try {
+      const { items, telegramConfigured: tgOk } = await notificationsApi.getNotifications();
+      setTelegramConfigured(tgOk);
+      if (items.length > 0) {
+        setNotifications(items);
+        setToStorage('notifications', items);
+      }
+    } catch (err) {
+      console.warn('[Admin] Could not sync notifications from backend API:', err);
+    }
+  }, []);
+
+  const syncCategoriesFromBackend = useCallback(async () => {
+    try {
+      const serverCats = await categoriesApi.getCategories();
+      const serverSlugs = new Set(serverCats.map((c) => c.slug.toLowerCase()));
+      const initialIds = new Set(initialCategories.map((c) => c.id));
+      const localStored = getFromStorage<Category[]>('categories', []);
+
+      // Migrate any custom unsynced local categories (e.g. created before DB sync) to PostgreSQL
+      const customUnsynced = localStored.filter(
+        (c) =>
+          !initialIds.has(c.id) &&
+          Number.isNaN(Number(c.id)) &&
+          c.slug &&
+          !serverSlugs.has(c.slug.toLowerCase())
+      );
+
+      let finalCats = serverCats;
+      if (customUnsynced.length > 0) {
+        for (const localCat of customUnsynced) {
+          try {
+            const created = await categoriesApi.createCategory({
+              name: localCat.name,
+              slug: localCat.slug,
+              description: localCat.description,
+              image: localCat.image,
+              status: localCat.status,
+            });
+            finalCats = [...finalCats, created];
+            serverSlugs.add(created.slug.toLowerCase());
+          } catch {}
+        }
+        broadcastCatalogUpdated();
+      }
+
+      if (finalCats.length > 0) {
+        setCategories(finalCats);
+        setToStorage('categories', finalCats);
+      }
+    } catch (err) {
+      console.warn('[Admin] Could not sync categories from backend API:', err);
+    }
+  }, []);
+
+  const syncProductsFromBackend = useCallback(async (currentCategories?: Category[]) => {
+    try {
+      const { items: serverProds } = await productsApi.getProducts({ page_size: 100 });
+      const serverSkus = new Set(serverProds.map((p) => p.sku.toUpperCase()));
+      const initialIds = new Set(initialProducts.map((p) => p.id));
+      const localStored = getFromStorage<Product[]>('products', []);
+      const catPool = currentCategories || getFromStorage<Category[]>('categories', []);
+
+      const customUnsynced = localStored.filter(
+        (p) =>
+          !initialIds.has(p.id) &&
+          Number.isNaN(Number(p.id)) &&
+          p.sku &&
+          !serverSkus.has(p.sku.toUpperCase())
+      );
+
+      let finalProds = serverProds;
+      if (customUnsynced.length > 0) {
+        for (const localProd of customUnsynced) {
+          try {
+            const matchedCat = catPool.find(
+              (c) =>
+                c.id === localProd.categoryId ||
+                c.name.toLowerCase() === localProd.category.toLowerCase()
+            );
+            const created = await productsApi.createProduct({
+              ...localProd,
+              categoryId: matchedCat?.id || catPool[0]?.id || '1',
+              category: matchedCat?.name || localProd.category,
+            });
+            finalProds = [created, ...finalProds];
+            serverSkus.add(created.sku.toUpperCase());
+          } catch {}
+        }
+        broadcastCatalogUpdated();
+      }
+
+      if (finalProds.length > 0) {
+        setProducts(finalProds);
+        setToStorage('products', finalProds);
+      }
+    } catch (err) {
+      console.warn('[Admin] Could not sync products from backend API:', err);
+    }
+  }, []);
+
+  const syncCatalogFromBackend = useCallback(async () => {
+    if (activeCatalogSyncPromise) {
+      return activeCatalogSyncPromise;
+    }
+
+    const run = async () => {
+      await syncCategoriesFromBackend();
+      await syncProductsFromBackend();
+    };
+
+    const promise = run().finally(() => {
+      activeCatalogSyncPromise = null;
+    });
+    activeCatalogSyncPromise = promise;
+    return promise;
+  }, [syncCategoriesFromBackend, syncProductsFromBackend]);
+
   // Fast-polling + Cross-tab BroadcastChannel listener
   useEffect(() => {
     syncOrdersFromBackend();
     syncCustomersFromBackend();
+    syncNotificationsFromBackend();
+    syncCatalogFromBackend();
+    settingsApi
+      .getSettings(initialSettings)
+      .then((serverSettings) => {
+        setSettings(serverSettings);
+        setToStorage('settings', serverSettings);
+      })
+      .catch(() => {});
 
     // Check backend every 5 seconds for any new incoming orders
     const timer = setInterval(syncOrdersFromBackend, 5000);
@@ -346,6 +607,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
           notifyNewOrder(orderNumber, customerName || 'Customer', total || 0, itemsCount || 1);
           syncOrdersFromBackend();
           syncCustomersFromBackend();
+          syncNotificationsFromBackend();
+        } else if (event.data?.type === 'SETTINGS_UPDATED' && event.data.settings) {
+          settingsApi
+            .getSettings(initialSettings)
+            .then((serverSettings) => {
+              setSettings(serverSettings);
+              setToStorage('settings', serverSettings);
+            })
+            .catch(() => {});
+        } else if (event.data?.type === 'CATALOG_UPDATED') {
+          syncCatalogFromBackend();
         }
       };
     } catch (e) {
@@ -356,7 +628,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       clearInterval(timer);
       channel?.close();
     };
-  }, [syncOrdersFromBackend, syncCustomersFromBackend, notifyNewOrder]);
+  }, [syncOrdersFromBackend, syncCustomersFromBackend, syncNotificationsFromBackend, syncCatalogFromBackend, notifyNewOrder]);
 
   const updateOrderStatus = (id: string, status: Order['status']) => {
     persist('orders', setOrders)((prev: Order[]) => prev.map(o => (o.id === id || o.orderNumber === id) ? {
@@ -512,8 +784,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Settings
   const updateSettings = (data: Partial<StoreSettings>) => {
-    persist('settings', setSettings)((prev: StoreSettings) => ({ ...prev, ...data }));
-    addToast('Settings updated successfully', 'success');
+    const merged: StoreSettings = { ...settings, ...data };
+    persist('settings', setSettings)(merged);
+
+    settingsApi
+      .updateSettings(data, merged)
+      .then((saved) => {
+        persist('settings', setSettings)(saved);
+        addToast('Settings saved to database', 'success');
+        try {
+          const channel = new BroadcastChannel('anime_store_channel');
+          channel.postMessage({ type: 'SETTINGS_UPDATED', settings: saved });
+          channel.close();
+        } catch {}
+      })
+      .catch((err) => {
+        console.error('[Admin] Backend settings update failed:', err);
+        addToast('Failed to save settings to database. Please verify backend is running.', 'error');
+      });
   };
 
   // Admin Profile
@@ -525,9 +813,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Notifications
   const markNotificationRead = (id: string) => {
     persist('notifications', setNotifications)((prev: Notification[]) => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    notificationsApi.markRead(id).catch(() => {});
   };
   const markAllNotificationsRead = () => {
     persist('notifications', setNotifications)((prev: Notification[]) => prev.map(n => ({ ...n, read: true })));
+    notificationsApi.markAllRead().catch(() => {});
+  };
+  const sendTestTelegram = async () => {
+    try {
+      const res = await notificationsApi.sendTestTelegram();
+      if (res.notification) {
+        persist('notifications', setNotifications)((prev: Notification[]) => [res.notification!, ...prev]);
+      }
+      if (res.sent) {
+        addToast('Telegram notification sent!', 'success');
+      } else {
+        addToast(`Telegram not sent: ${res.detail || 'Check token/chat ID'}`, 'error');
+      }
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Failed to send Telegram test', 'error');
+    }
   };
   const unreadNotificationCount = notifications.filter(n => !n.read).length;
 
@@ -720,6 +1025,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       settings, updateSettings,
       adminProfile, updateAdminProfile,
       notifications, markNotificationRead, markAllNotificationsRead, unreadNotificationCount,
+      telegramConfigured, sendTestTelegram, refreshNotifications: syncNotificationsFromBackend,
       isAuthenticated, login, logout,
       authBackground, setAuthBackground,
       paymentProviders, updatePaymentProvider,

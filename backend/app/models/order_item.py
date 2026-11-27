@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import String, Float, Integer, ForeignKey, DateTime
+from sqlalchemy import String, Float, Integer, Text, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
@@ -14,7 +14,7 @@ class OrderItem(Base):
 
     product_name: Mapped[str] = mapped_column(String(255), nullable=False)
     series: Mapped[str] = mapped_column(String(100), default="", nullable=False)
-    image_url: Mapped[str] = mapped_column(String(500), default="", nullable=False)
+    image_url: Mapped[str] = mapped_column(Text, default="", nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     variant: Mapped[str] = mapped_column(String(100), default="", nullable=False)

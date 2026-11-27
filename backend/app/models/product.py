@@ -21,7 +21,7 @@ class Product(Base):
     review_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     units_sold: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    image_url: Mapped[str] = mapped_column(String(500), default="", nullable=False)
+    image_url: Mapped[str] = mapped_column(Text, default="", nullable=False)
     badge: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_new_arrival: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

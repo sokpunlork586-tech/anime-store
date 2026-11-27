@@ -18,9 +18,11 @@ import {
   X,
 } from 'lucide-react';
 import { useStore } from '../contexts/StoreContext';
+import { useAuth } from '../hooks/useAuth';
 import { BrandLogo } from '../components/BrandLogo';
 import { SafeImage } from '../components/SafeImage';
 import { ToastContainer } from '../components/ToastContainer';
+import { searchCatalogProducts } from '../utils/catalogSearch';
 import { formatPrice } from '../utils/format';
 
 const PRIMARY_NAV = [
@@ -32,6 +34,11 @@ const PRIMARY_NAV = [
 
 export const StoreLayout: React.FC = () => {
   const { cartCount, wishlist, currentUser, products, settings, showToast } = useStore();
+  const { user: authUser, isAuthenticated } = useAuth();
+  const hasAccount = isAuthenticated || Boolean(currentUser);
+  const accountDisplayName =
+    authUser?.displayName || authUser?.email?.split('@')[0] || currentUser?.name || 'Collector';
+  const accountEmail = authUser?.email || currentUser?.email || '';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,16 +47,8 @@ export const StoreLayout: React.FC = () => {
   const location = useLocation();
 
   const searchMatches = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return [];
-    return products
-      .filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.series.toLowerCase().includes(q) ||
-          p.categoryName.toLowerCase().includes(q)
-      )
-      .slice(0, 5);
+    if (!searchQuery.trim()) return [];
+    return searchCatalogProducts(products, searchQuery).items.slice(0, 5);
   }, [products, searchQuery]);
 
   const handleSearchSubmit = (e?: React.SyntheticEvent) => {
@@ -377,8 +376,8 @@ export const StoreLayout: React.FC = () => {
 
             {/* Account Icon (Desktop) */}
             <Link
-              to={currentUser ? '/profile' : '/login'}
-              aria-label={currentUser ? `Account (${currentUser.name})` : 'Sign in'}
+              to={hasAccount ? '/profile' : '/login'}
+              aria-label={hasAccount ? `Account (${accountDisplayName})` : 'Sign in'}
               className="hidden sm:flex w-10 h-10 rounded-full bg-[#FFFDF9] border border-[#EAD7C3] items-center justify-center text-[#3D6A46] hover:border-[#D96532] hover:text-[#D96532] transition-colors"
             >
               <User className="w-[18px] h-[18px]" />
@@ -479,18 +478,18 @@ export const StoreLayout: React.FC = () => {
             </nav>
 
             <div className="p-4 border-t border-[#EFE0CE]">
-              {currentUser ? (
+              {hasAccount ? (
                 <Link
                   to="/profile"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 p-2.5 rounded-xl bg-[#F7DCC3]/50 hover:bg-[#F7DCC3] transition-colors"
                 >
                   <div className="w-9 h-9 rounded-full bg-[#D96532] text-white font-bold flex items-center justify-center text-sm">
-                    {currentUser.name.charAt(0).toUpperCase()}
+                    {accountDisplayName.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-[#3D160F] truncate">{currentUser.name}</p>
-                    <p className="text-xs text-[#724A3E] truncate">{currentUser.email}</p>
+                    <p className="text-sm font-semibold text-[#3D160F] truncate">{accountDisplayName}</p>
+                    <p className="text-xs text-[#724A3E] truncate">{accountEmail}</p>
                   </div>
                 </Link>
               ) : (
@@ -654,7 +653,7 @@ export const StoreLayout: React.FC = () => {
           { to: '/', label: 'Home', icon: Home, badge: 0 },
           { to: '/shop', label: 'Shop', icon: ShoppingBag, badge: 0 },
           { to: '/cart', label: 'Cart', icon: ShoppingCart, badge: cartCount },
-          { to: currentUser ? '/profile' : '/login', label: 'Account', icon: User, badge: 0 },
+          { to: hasAccount ? '/profile' : '/login', label: 'Account', icon: User, badge: 0 },
         ].map((item) => {
           const Icon = item.icon;
           const active =

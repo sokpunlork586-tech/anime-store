@@ -431,17 +431,17 @@ export default function PaymentAccounts() {
             </div>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Merchant ID / Account Identifier</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Merchant ID / Account Identifier</label>
               <input
                 type="text"
                 value={formMerchantId}
                 onChange={(e) => setFormMerchantId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none font-mono text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">
+              <label className="block text-base font-semibold text-text-primary mb-1.5">
                 API Key (leave blank to keep {editingProvider.apiKeyMasked})
               </label>
               <input
@@ -449,12 +449,12 @@ export default function PaymentAccounts() {
                 placeholder="Enter new gateway API key..."
                 value={formApiKey}
                 onChange={(e) => setFormApiKey(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none font-mono text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">
+              <label className="block text-base font-semibold text-text-primary mb-1.5">
                 Webhook Secret (leave blank to keep {editingProvider.webhookSecretMasked})
               </label>
               <input
@@ -462,16 +462,16 @@ export default function PaymentAccounts() {
                 placeholder="Enter webhook signature secret..."
                 value={formWebhookSecret}
                 onChange={(e) => setFormWebhookSecret(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none font-mono text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Default Settlement Currency</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Default Settlement Currency</label>
               <select
                 value={formCurrency}
                 onChange={(e) => setFormCurrency(e.target.value as any)}
-                className="w-full px-3 py-2 rounded-xl border border-border focus:ring-1 focus:ring-primary focus:outline-none text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               >
                 <option value="USD">USD ($)</option>
                 <option value="KHR">KHR (៛)</option>
@@ -559,7 +559,7 @@ export default function PaymentAccounts() {
             </div>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">
+              <label className="block text-base font-semibold text-text-primary mb-1.5">
                 Refund Amount ($) [Max: {formatCurrency(refundingTx.amount)}]
               </label>
               <input
@@ -569,17 +569,17 @@ export default function PaymentAccounts() {
                 min="0.01"
                 value={refundAmount}
                 onChange={(e) => setRefundAmount(parseFloat(e.target.value) || 0)}
-                className="w-full px-3 py-2 rounded-xl border border-border font-bold text-xs"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-text-primary mb-1">Refund Reason</label>
+              <label className="block text-base font-semibold text-text-primary mb-1.5">Refund Reason</label>
               <textarea
                 rows={3}
                 value={refundReason}
                 onChange={(e) => setRefundReason(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
           </div>

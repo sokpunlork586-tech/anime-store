@@ -1,7 +1,11 @@
-from typing import List, Union
+from pathlib import Path
+from typing import List, Optional, Union
 from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import json
+
+ROOT_ENV = Path(__file__).resolve().parents[3] / ".env"
+BACKEND_ENV = Path(__file__).resolve().parents[2] / ".env"
 
 
 class Settings(BaseSettings):
@@ -9,8 +13,8 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
 
-    # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/anime_store_db"
+    # Database (loaded from .env)
+    DATABASE_URL: str = "sqlite+aiosqlite:///./anime_store.db"
 
     # Security
     SECRET_KEY: str = "anime_store_super_secure_production_secret_key_change_me_987654321"
@@ -44,8 +48,19 @@ class Settings(BaseSettings):
     FIRST_ADMIN_PASSWORD: str = "Admin123456!"
     FIRST_ADMIN_NAME: str = "Admin"
 
+    # Telegram Notification (Optional)
+    TELEGRAM_BOT_TOKEN: Optional[str] = None
+    TELEGRAM_CHAT_ID: Optional[str] = None
+    TELEGRAM_ENABLED: bool = True
+
+    # Firebase Verification (Optional)
+    FIREBASE_PROJECT_ID: Optional[str] = None
+    FIREBASE_API_KEY: Optional[str] = None
+    VITE_FIREBASE_PROJECT_ID: Optional[str] = None
+    VITE_FIREBASE_API_KEY: Optional[str] = None
+
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(str(ROOT_ENV), str(BACKEND_ENV), ".env"),
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore"

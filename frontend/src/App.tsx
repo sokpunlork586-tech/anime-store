@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { StoreProvider } from './contexts/StoreContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { StoreLayout } from './layouts/StoreLayout';
 import { AdminLayout } from './layouts/AdminLayout';
 
-// Storefront Pages (14 pages)
+// Storefront Pages
 import { HomePage } from './pages/HomePage';
 import { ShopPage } from './pages/ShopPage';
 import { AnimeCategoriesPage } from './pages/AnimeCategoriesPage';
@@ -16,9 +18,13 @@ import { CartPage } from './pages/CartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
+
+// Firebase Auth Pages
+import { Login } from './pages/auth/Login';
+import { Register } from './pages/auth/Register';
+import { ForgotPassword } from './pages/auth/ForgotPassword';
+import { VerifyEmail } from './pages/auth/VerifyEmail';
 
 // Admin Dashboard Pages (7 pages)
 import { AdminOverviewPage } from './pages/admin/AdminOverviewPage';
@@ -49,42 +55,88 @@ const ScrollToTop: React.FC = () => {
 export default function App() {
   return (
     <StoreProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
-          {/* Storefront Routes */}
-          <Route element={<StoreLayout />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/shop" element={<ShopPage />} />
-            <Route path="/anime" element={<AnimeCategoriesPage />} />
-            <Route path="/manga" element={<MangaPage />} />
-            <Route path="/new-arrivals" element={<NewArrivalsPage />} />
-            <Route path="/product/:id" element={<ProductDetailsPage />} />
-            <Route path="/wishlist" element={<WishlistPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-          </Route>
+      <AuthProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <Routes>
+            {/* Storefront Routes */}
+            <Route element={<StoreLayout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/shop" element={<ShopPage />} />
+              <Route path="/anime" element={<AnimeCategoriesPage />} />
+              <Route path="/manga" element={<MangaPage />} />
+              <Route path="/new-arrivals" element={<NewArrivalsPage />} />
+              <Route path="/product/:id" element={<ProductDetailsPage />} />
+              <Route path="/wishlist" element={<WishlistPage />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route
+                path="/login"
+                element={
+                  <ProtectedRoute requireGuest>
+                    <Login />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  <ProtectedRoute requireGuest>
+                    <Register />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/forgot-password"
+                element={
+                  <ProtectedRoute requireGuest>
+                    <ForgotPassword />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/verify-email"
+                element={
+                  <ProtectedRoute requireAuth requireVerified={false}>
+                    <VerifyEmail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute requireAuth requireVerified>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
 
-          {/* Admin Dashboard Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminOverviewPage />} />
-            <Route path="products" element={<AdminProductsPage />} />
-            <Route path="categories" element={<AdminCategoriesPage />} />
-            <Route path="orders" element={<AdminOrdersPage />} />
-            <Route path="customers" element={<AdminCustomersPage />} />
-            <Route path="inventory" element={<AdminInventoryPage />} />
-            <Route path="settings" element={<AdminSettingsPage />} />
-          </Route>
+            {/* Admin Dashboard Routes (Admin role validated via trusted claims / backend) */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requireAuth requireVerified allowedRoles={['admin']}>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<AdminOverviewPage />} />
+              <Route path="products" element={<AdminProductsPage />} />
+              <Route path="categories" element={<AdminCategoriesPage />} />
+              <Route path="orders" element={<AdminOrdersPage />} />
+              <Route path="customers" element={<AdminCustomersPage />} />
+              <Route path="inventory" element={<AdminInventoryPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
+            </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </StoreProvider>
   );
 }

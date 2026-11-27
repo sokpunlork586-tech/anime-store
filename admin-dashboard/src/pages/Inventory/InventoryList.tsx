@@ -189,7 +189,7 @@ export default function InventoryList() {
       >
         <form onSubmit={handleAdjustSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Adjustment Type</label>
+            <label className="block text-base font-semibold text-text-primary mb-1.5">Adjustment Type</label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -223,24 +223,24 @@ export default function InventoryList() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Quantity</label>
+            <label className="block text-base font-semibold text-text-primary mb-1.5">Quantity</label>
             <input
               type="number"
               min="1"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm bg-white border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Reason / Notes</label>
+            <label className="block text-base font-semibold text-text-primary mb-1.5">Reason / Notes</label>
             <input
               type="text"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Supplier delivery PO-4021"
-              className="w-full px-3.5 py-2 text-sm bg-white border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="w-full px-4 py-2.5 text-base sm:text-sm bg-white border border-border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
 

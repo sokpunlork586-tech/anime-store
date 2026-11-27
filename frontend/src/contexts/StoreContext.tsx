@@ -11,17 +11,29 @@ import {
   ToastMessage,
   UserSession,
 } from '../types';
-import {
-  INITIAL_CART,
-  INITIAL_CATEGORIES,
-  INITIAL_CUSTOMERS,
-  INITIAL_ORDERS,
-  INITIAL_PRODUCTS,
-  INITIAL_SETTINGS,
-  INITIAL_WISHLIST,
-} from '../data/mockData';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { mapBackendProduct } from '../services/product.service';
 import { generateId, slugify } from '../utils/format';
+
+const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
+  figures: '/images/products/prod_ninja_figure_1795162308489.jpg',
+  manga: '/images/products/prod_manga_collection_1795162321332.jpg',
+  posters: '/images/products/prod_wall_scroll_1795162312280.jpg',
+  accessories: '/images/products/prod_accessories_pack_1795162343404.jpg',
+  apparel: '/images/products/prod_hoodie_streetwear_1795178529403.jpg',
+  clothing: '/images/products/prod_hoodie_streetwear_1795178529403.jpg',
+  collectibles: '/images/products/prod_collectible_lamp_1795178524570.jpg',
+  plush: '/images/products/prod_forest_plush_1795162309765.jpg',
+  keychains: '/images/products/prod_keychain_charm_1795178526696.jpg',
+};
+
+function resolveCategoryFallbackImage(slug: string, shortName: string): string {
+  const haystack = `${slug} ${shortName}`.toLowerCase();
+  for (const [key, img] of Object.entries(CATEGORY_FALLBACK_IMAGES)) {
+    if (haystack.includes(key)) return img;
+  }
+  return '/images/products/prod_warrior_figure_1795162308415.jpg';
+}
 
 interface PlaceOrderInput {
   customerName: string;
@@ -97,34 +109,71 @@ interface StoreContextValue {
   dismissToast: (id: string) => void;
 }
 
-const StoreContext = createContext<StoreContextValue | undefined>(undefined);
+const globalForStore = globalThis as unknown as {
+  __ANIME_STORE_CONTEXT__?: React.Context<StoreContextValue | undefined>;
+};
 
-const STORAGE_VERSION = 'v1';
-const CATALOG_VERSION = 'v3';
+const StoreContext =
+  globalForStore.__ANIME_STORE_CONTEXT__ ??
+  (globalForStore.__ANIME_STORE_CONTEXT__ = createContext<StoreContextValue | undefined>(undefined));
+
+const STORAGE_VERSION = 'v3';
+const CATALOG_VERSION = 'v4';
+const EMPTY_PRODUCTS: Product[] = [];
+const EMPTY_CATEGORIES: Category[] = [];
+const EMPTY_CART: CartItem[] = [];
+const EMPTY_WISHLIST: string[] = [];
+const EMPTY_ORDERS: Order[] = [];
+const EMPTY_CUSTOMERS: Customer[] = [];
+const INITIAL_EMPTY_SETTINGS: StoreSettings = {
+  storeName: '',
+  tagline: '',
+  announcementText: '',
+  promoBannerTitle: '',
+  promoBannerSubtitle: '',
+  heroBannerImage: '',
+  promoBannerImage: '',
+  clubBannerImage: '',
+  phone: '',
+  email: '',
+  address: '',
+  freeShippingThreshold: 0,
+  standardShippingFee: 0,
+  clubDiscountPercent: 0,
+};
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useLocalStorage<Product[]>(`anime_store_products_${CATALOG_VERSION}`, INITIAL_PRODUCTS);
+  const [products, setProducts] = useLocalStorage<Product[]>(`anime_store_products_${CATALOG_VERSION}`, EMPTY_PRODUCTS);
   const [categories, setCategories] = useLocalStorage<Category[]>(
     `anime_store_categories_${CATALOG_VERSION}`,
-    INITIAL_CATEGORIES
+    EMPTY_CATEGORIES
   );
 
   useEffect(() => {
     try {
       window.localStorage.removeItem('anime_store_products_v1');
       window.localStorage.removeItem('anime_store_products_v2');
+      window.localStorage.removeItem('anime_store_products_v3');
       window.localStorage.removeItem('anime_store_categories_v1');
       window.localStorage.removeItem('anime_store_categories_v2');
+      window.localStorage.removeItem('anime_store_categories_v3');
+      window.localStorage.removeItem('anime_store_cart_v1');
+      window.localStorage.removeItem('anime_store_wishlist_v1');
+      window.localStorage.removeItem('anime_store_orders_v1');
+      window.localStorage.removeItem('anime_store_customers_v1');
+      window.localStorage.removeItem('anime_store_user_v1');
+      window.localStorage.removeItem('anime_store_settings_v1');
+      window.localStorage.removeItem('anime_store_settings_v2');
     } catch {
       // Ignore storage restrictions
     }
   }, []);
-  const [cart, setCart] = useLocalStorage<CartItem[]>(`anime_store_cart_${STORAGE_VERSION}`, INITIAL_CART);
-  const [wishlist, setWishlist] = useLocalStorage<string[]>(`anime_store_wishlist_${STORAGE_VERSION}`, INITIAL_WISHLIST);
-  const [orders, setOrders] = useLocalStorage<Order[]>(`anime_store_orders_${STORAGE_VERSION}`, INITIAL_ORDERS);
+  const [cart, setCart] = useLocalStorage<CartItem[]>(`anime_store_cart_${STORAGE_VERSION}`, EMPTY_CART);
+  const [wishlist, setWishlist] = useLocalStorage<string[]>(`anime_store_wishlist_${STORAGE_VERSION}`, EMPTY_WISHLIST);
+  const [orders, setOrders] = useLocalStorage<Order[]>(`anime_store_orders_${STORAGE_VERSION}`, EMPTY_ORDERS);
   const [customers, setCustomers] = useLocalStorage<Customer[]>(
     `anime_store_customers_${STORAGE_VERSION}`,
-    INITIAL_CUSTOMERS
+    EMPTY_CUSTOMERS
   );
 
   useEffect(() => {
@@ -150,27 +199,156 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       })
       .catch(() => {
-        // Keep local cache if backend is unreachable
+        // Keep cached state if backend is unreachable
       });
+
+    fetch(`${API_URL}/orders?page_size=100`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.items)) {
+          const mappedOrders: Order[] = data.items.map((o: any) => ({
+            id: o.order_number || String(o.id),
+            customerId: String(o.user_id || o.customer_email || ''),
+            customerName: o.customer_name || '',
+            customerEmail: o.customer_email || '',
+            customerPhone: o.customer_phone || '',
+            shippingAddress: o.shipping_address || '',
+            city: o.city || '',
+            paymentMethod: (o.payment_method as Order['paymentMethod']) || 'Cash on Delivery',
+            items: Array.isArray(o.items)
+              ? o.items.map((i: any) => ({
+                  productId: String(i.product_id ?? ''),
+                  name: i.product_name || '',
+                  series: i.series || '',
+                  image: i.image_url || '',
+                  price: Number(i.price ?? 0),
+                  quantity: Number(i.quantity ?? 1),
+                  variant: i.variant || undefined,
+                }))
+              : [],
+            subtotal: Number(o.subtotal ?? 0),
+            shippingFee: Number(o.shipping_fee ?? 0),
+            discount: Number(o.discount ?? 0),
+            total: Number(o.total_amount ?? 0),
+            status: (o.status as OrderStatus) || 'Pending',
+            createdAt: o.created_at || new Date().toISOString(),
+            notes: o.notes || undefined,
+          }));
+          setOrders(mappedOrders);
+        }
+      })
+      .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [currentUser, setCurrentUser] = useLocalStorage<UserSession | null>(
     `anime_store_user_${STORAGE_VERSION}`,
-    {
-      id: INITIAL_CUSTOMERS[0].id,
-      name: INITIAL_CUSTOMERS[0].name,
-      email: INITIAL_CUSTOMERS[0].email,
-      phone: INITIAL_CUSTOMERS[0].phone,
-      address: INITIAL_CUSTOMERS[0].address,
-      city: INITIAL_CUSTOMERS[0].city,
-      role: INITIAL_CUSTOMERS[0].role,
-      clubMember: INITIAL_CUSTOMERS[0].clubMember,
-      joinedAt: INITIAL_CUSTOMERS[0].joinedAt,
-    }
+    null
   );
   const [settings, setSettings] = useLocalStorage<StoreSettings>(
     `anime_store_settings_${STORAGE_VERSION}`,
-    INITIAL_SETTINGS
+    INITIAL_EMPTY_SETTINGS
   );
+
+  useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+    const syncSettings = () => {
+      fetch(`${API_URL}/settings`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((b) => {
+          if (!b) return;
+          const addressParts = [b.address, b.city].filter(Boolean).join(', ');
+          setSettings((prev) => ({
+            ...prev,
+            storeName: b.store_name ?? prev.storeName,
+            tagline: b.store_tagline ?? prev.tagline,
+            announcementText: b.announcement_text ?? prev.announcementText,
+            promoBannerTitle: b.promo_banner_title ?? prev.promoBannerTitle,
+            promoBannerSubtitle: b.promo_banner_subtitle ?? prev.promoBannerSubtitle,
+            heroBannerImage: b.hero_banner_image ?? prev.heroBannerImage,
+            promoBannerImage: b.promo_banner_image ?? prev.promoBannerImage,
+            clubBannerImage: b.club_banner_image ?? prev.clubBannerImage,
+            phone: b.phone ?? prev.phone,
+            email: b.email ?? prev.email,
+            address: addressParts || prev.address,
+            freeShippingThreshold:
+              b.free_shipping_threshold !== undefined
+                ? Number(b.free_shipping_threshold)
+                : prev.freeShippingThreshold,
+            standardShippingFee:
+              b.standard_rate !== undefined ? Number(b.standard_rate) : prev.standardShippingFee,
+            clubDiscountPercent:
+              b.club_discount_percent !== undefined
+                ? Number(b.club_discount_percent)
+                : prev.clubDiscountPercent,
+          }));
+        })
+        .catch(() => {});
+    };
+
+    const syncCatalog = () => {
+      fetch(`${API_URL}/categories`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((catData) => {
+          if (Array.isArray(catData)) {
+            const mappedCats: Category[] = catData
+              .filter((c: any) => !c.status || c.status === 'active')
+              .map((c: any) => ({
+                id: String(c.id),
+                slug: c.slug || slugify(c.name || ''),
+                name: c.name || '',
+                shortName: c.short_name || (c.name || '').split(' ')[0],
+                description: c.description || '',
+                image:
+                  c.image ||
+                  resolveCategoryFallbackImage(c.slug || '', c.short_name || c.name || ''),
+                iconKey: c.icon_key || 'Package',
+                accentBg: c.accent_bg || '#F9E5CD',
+              }));
+            setCategories(mappedCats);
+          }
+        })
+        .catch(() => {});
+
+      fetch(`${API_URL}/products?page_size=100`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((prodData) => {
+          if (prodData && Array.isArray(prodData.items)) {
+            const mappedProds: Product[] = prodData.items
+              .filter((p: any) => !p.status || p.status === 'active')
+              .map(mapBackendProduct);
+            setProducts(mappedProds);
+          }
+        })
+        .catch(() => {});
+    };
+
+    syncSettings();
+    syncCatalog();
+    const timer = window.setInterval(() => {
+      syncSettings();
+      syncCatalog();
+    }, 5000);
+    window.addEventListener('focus', syncSettings);
+    window.addEventListener('focus', syncCatalog);
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('anime_store_channel');
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'SETTINGS_UPDATED') {
+          syncSettings();
+        } else if (event.data?.type === 'CATALOG_UPDATED') {
+          syncCatalog();
+        }
+      };
+    } catch {}
+
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', syncSettings);
+      window.removeEventListener('focus', syncCatalog);
+      channel?.close();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const dismissToast = useCallback((id: string) => {
@@ -191,15 +369,62 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Product CRUD
   const addProduct = useCallback(
     (data: Omit<Product, 'id' | 'createdAt' | 'reviews' | 'reviewCount'>): Product => {
+      const tempId = `prod-${slugify(data.name)}-${Date.now().toString().slice(-4)}`;
       const newProduct: Product = {
         ...data,
-        id: `prod-${slugify(data.name)}-${Date.now().toString().slice(-4)}`,
+        id: tempId,
         createdAt: new Date().toISOString().split('T')[0],
         reviews: [],
         reviewCount: 0,
       };
       setProducts((prev) => [newProduct, ...prev]);
-      showToast('Product added', `${newProduct.name} is now live in the store.`);
+
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+      const numericCatId = Number(data.categoryId);
+      fetch(`${API_URL}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sku: data.sku,
+          name: data.name,
+          slug: `${slugify(data.name)}-${Date.now().toString().slice(-4)}`,
+          series: data.series || '',
+          category_id: Number.isNaN(numericCatId) ? 1 : numericCatId,
+          price: data.price,
+          original_price: data.originalPrice ?? null,
+          rating: data.rating ?? 0,
+          stock_quantity: data.stock ?? 0,
+          image_url: data.image || '',
+          images: data.gallery?.length ? data.gallery : data.image ? [data.image] : [],
+          badge: data.badge || null,
+          featured: Boolean(data.featured),
+          is_new_arrival: Boolean(data.isNewArrival),
+          status: 'active',
+          description: data.description || '',
+          specifications: data.specifications || {},
+          variants: data.variants || [],
+          tags: data.tags || [],
+        }),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((saved) => {
+          if (saved?.id) {
+            const mapped = mapBackendProduct(saved);
+            setProducts((prev) => prev.map((p) => (p.id === tempId ? mapped : p)));
+            try {
+              const channel = new BroadcastChannel('anime_store_channel');
+              channel.postMessage({ type: 'CATALOG_UPDATED' });
+              channel.close();
+            } catch {}
+            showToast('Product added', `${newProduct.name} saved to database.`);
+          } else {
+            showToast('Product added', `${newProduct.name} is now live in local cache.`);
+          }
+        })
+        .catch(() => {
+          showToast('Product added', `${newProduct.name} is now live in local cache.`);
+        });
+
       return newProduct;
     },
     [setProducts, showToast]
@@ -208,6 +433,42 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateProduct = useCallback(
     (id: string, updates: Partial<Product>) => {
       setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+      const numId = Number(id);
+      if (!Number.isNaN(numId)) {
+        const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+        const payload: Record<string, unknown> = {};
+        if (updates.name !== undefined) payload.name = updates.name;
+        if (updates.sku !== undefined) payload.sku = updates.sku;
+        if (updates.series !== undefined) payload.series = updates.series;
+        if (updates.categoryId !== undefined && !Number.isNaN(Number(updates.categoryId))) {
+          payload.category_id = Number(updates.categoryId);
+        }
+        if (updates.price !== undefined) payload.price = updates.price;
+        if (updates.originalPrice !== undefined) payload.original_price = updates.originalPrice ?? null;
+        if (updates.stock !== undefined) payload.stock_quantity = updates.stock;
+        if (updates.image !== undefined) payload.image_url = updates.image;
+        if (updates.gallery !== undefined) payload.images = updates.gallery;
+        if (updates.badge !== undefined) payload.badge = updates.badge;
+        if (updates.featured !== undefined) payload.featured = updates.featured;
+        if (updates.isNewArrival !== undefined) payload.is_new_arrival = updates.isNewArrival;
+        if (updates.description !== undefined) payload.description = updates.description;
+
+        fetch(`${API_URL}/products/${numId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+          .then((res) => {
+            if (res.ok) {
+              try {
+                const channel = new BroadcastChannel('anime_store_channel');
+                channel.postMessage({ type: 'CATALOG_UPDATED' });
+                channel.close();
+              } catch {}
+            }
+          })
+          .catch(() => {});
+      }
       showToast('Product updated', 'Catalog details have been saved.');
     },
     [setProducts, showToast]
@@ -218,6 +479,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setProducts((prev) => prev.filter((p) => p.id !== id));
       setCart((prev) => prev.filter((item) => item.productId !== id));
       setWishlist((prev) => prev.filter((wid) => wid !== id));
+      const numId = Number(id);
+      if (!Number.isNaN(numId)) {
+        const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+        fetch(`${API_URL}/products/${numId}`, { method: 'DELETE' })
+          .then((res) => {
+            if (res.ok) {
+              try {
+                const channel = new BroadcastChannel('anime_store_channel');
+                channel.postMessage({ type: 'CATALOG_UPDATED' });
+                channel.close();
+              } catch {}
+            }
+          })
+          .catch(() => {});
+      }
       showToast('Product deleted', 'Item removed from the store catalog.', 'info');
     },
     [setProducts, setCart, setWishlist, showToast]
@@ -262,13 +538,49 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Category CRUD
   const addCategory = useCallback(
     (data: Omit<Category, 'id' | 'slug'>): Category => {
+      const slug = slugify(data.name);
       const created: Category = {
         ...data,
-        id: `cat-${slugify(data.name)}-${Date.now().toString().slice(-3)}`,
-        slug: slugify(data.name),
+        id: `cat-${slug}-${Date.now().toString().slice(-3)}`,
+        slug,
       };
       setCategories((prev) => [...prev, created]);
-      showToast('Category created', `${created.name} added to storefront navigation.`);
+
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+      fetch(`${API_URL}/categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name.trim(),
+          slug,
+          short_name: data.shortName || data.name.trim().split(/\s+/)[0],
+          description: data.description || '',
+          image: data.image || '',
+          icon_key: data.iconKey || 'Package',
+          accent_bg: data.accentBg || '#FFF0E6',
+          status: 'active',
+        }),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((saved) => {
+          if (saved?.id) {
+            setCategories((prev) =>
+              prev.map((c) => (c.id === created.id ? { ...c, id: String(saved.id) } : c))
+            );
+            try {
+              const channel = new BroadcastChannel('anime_store_channel');
+              channel.postMessage({ type: 'CATALOG_UPDATED' });
+              channel.close();
+            } catch {}
+            showToast('Category saved', `${created.name} saved to database.`);
+          } else {
+            showToast('Category created', `${created.name} added locally.`);
+          }
+        })
+        .catch(() => {
+          showToast('Category created', `${created.name} added locally.`);
+        });
+
       return created;
     },
     [setCategories, showToast]
@@ -276,19 +588,45 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateCategory = useCallback(
     (id: string, updates: Partial<Category>) => {
+      const nextSlug = updates.name ? slugify(updates.name) : updates.slug;
       setCategories((prev) =>
         prev.map((c) =>
           c.id === id
             ? {
                 ...c,
                 ...updates,
-                slug: updates.name ? slugify(updates.name) : c.slug,
+                slug: nextSlug || c.slug,
               }
             : c
         )
       );
       if (updates.name) {
         setProducts((prev) => prev.map((p) => (p.categoryId === id ? { ...p, categoryName: updates.name! } : p)));
+      }
+
+      const numId = Number(id);
+      if (!Number.isNaN(numId)) {
+        const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+        fetch(`${API_URL}/categories/${numId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...(updates.name !== undefined ? { name: updates.name, slug: nextSlug } : {}),
+            ...(updates.shortName !== undefined ? { short_name: updates.shortName } : {}),
+            ...(updates.description !== undefined ? { description: updates.description } : {}),
+            ...(updates.image !== undefined ? { image: updates.image } : {}),
+          }),
+        })
+          .then((res) => {
+            if (res.ok) {
+              try {
+                const channel = new BroadcastChannel('anime_store_channel');
+                channel.postMessage({ type: 'CATALOG_UPDATED' });
+                channel.close();
+              } catch {}
+            }
+          })
+          .catch(() => {});
       }
       showToast('Category updated', 'Category changes saved.');
     },
@@ -298,6 +636,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const deleteCategory = useCallback(
     (id: string) => {
       setCategories((prev) => prev.filter((c) => c.id !== id));
+      const numId = Number(id);
+      if (!Number.isNaN(numId)) {
+        const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+        fetch(`${API_URL}/categories/${numId}`, { method: 'DELETE' })
+          .then((res) => {
+            if (res.ok) {
+              try {
+                const channel = new BroadcastChannel('anime_store_channel');
+                channel.postMessage({ type: 'CATALOG_UPDATED' });
+                channel.close();
+              } catch {}
+            }
+          })
+          .catch(() => {});
+      }
       showToast('Category removed', 'The category has been deleted.', 'info');
     },
     [setCategories, showToast]
@@ -457,16 +810,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           tax: 0,
           total_amount: Number(total.toFixed(2)),
           notes: input.notes || '',
-          items: orderItems.map((item) => ({
-            product_id: typeof item.productId === 'number' ? item.productId : null,
-            product_name: item.name,
-            series: item.series || '',
-            image_url: item.image || '',
-            price: Number(item.price.toFixed(2)),
-            quantity: item.quantity,
-            variant: item.variant || '',
-            total: Number((item.price * item.quantity).toFixed(2)),
-          })),
+          items: orderItems.map((item) => {
+            const numericProdId = Number(item.productId);
+            return {
+              product_id: Number.isInteger(numericProdId) && numericProdId > 0 ? numericProdId : null,
+              product_name: item.name,
+              series: item.series || '',
+              image_url: item.image || '',
+              price: Number(item.price.toFixed(2)),
+              quantity: item.quantity,
+              variant: item.variant || '',
+              total: Number((item.price * item.quantity).toFixed(2)),
+            };
+          }),
         };
 
         fetch(`${API_URL}/orders`, {
@@ -810,7 +1166,72 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateSettings = useCallback(
     (updates: Partial<StoreSettings>) => {
       setSettings((prev) => ({ ...prev, ...updates }));
-      showToast('Settings saved', 'Storefront configuration updated live.');
+
+      const payload: Record<string, unknown> = {};
+      if (updates.storeName !== undefined) payload.store_name = updates.storeName;
+      if (updates.tagline !== undefined) payload.store_tagline = updates.tagline;
+      if (updates.announcementText !== undefined) payload.announcement_text = updates.announcementText;
+      if (updates.promoBannerTitle !== undefined) payload.promo_banner_title = updates.promoBannerTitle;
+      if (updates.promoBannerSubtitle !== undefined) {
+        payload.promo_banner_subtitle = updates.promoBannerSubtitle;
+      }
+      if (updates.heroBannerImage !== undefined) payload.hero_banner_image = updates.heroBannerImage;
+      if (updates.promoBannerImage !== undefined) payload.promo_banner_image = updates.promoBannerImage;
+      if (updates.clubBannerImage !== undefined) payload.club_banner_image = updates.clubBannerImage;
+      if (updates.phone !== undefined) payload.phone = updates.phone;
+      if (updates.email !== undefined) payload.email = updates.email;
+      if (updates.address !== undefined) payload.address = updates.address;
+      if (updates.freeShippingThreshold !== undefined) {
+        payload.free_shipping_threshold = updates.freeShippingThreshold;
+      }
+      if (updates.standardShippingFee !== undefined) {
+        payload.standard_rate = updates.standardShippingFee;
+      }
+      if (updates.clubDiscountPercent !== undefined) {
+        payload.club_discount_percent = updates.clubDiscountPercent;
+      }
+
+      if (Object.keys(payload).length === 0) {
+        showToast('Settings saved', 'Storefront configuration updated live.');
+        return;
+      }
+
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+      fetch(`${API_URL}/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(async (res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          setSettings((prev) => ({
+            ...prev,
+            storeName: data.store_name ?? prev.storeName,
+            tagline: data.store_tagline ?? prev.tagline,
+            announcementText: data.announcement_text ?? prev.announcementText,
+            promoBannerTitle: data.promo_banner_title ?? prev.promoBannerTitle,
+            promoBannerSubtitle: data.promo_banner_subtitle ?? prev.promoBannerSubtitle,
+            heroBannerImage: data.hero_banner_image ?? prev.heroBannerImage,
+            promoBannerImage: data.promo_banner_image ?? prev.promoBannerImage,
+            clubBannerImage: data.club_banner_image ?? prev.clubBannerImage,
+            phone: data.phone ?? prev.phone,
+            email: data.email ?? prev.email,
+            address: data.address ?? prev.address,
+            freeShippingThreshold: Number(data.free_shipping_threshold ?? prev.freeShippingThreshold),
+            standardShippingFee: Number(data.standard_rate ?? prev.standardShippingFee),
+            clubDiscountPercent: Number(data.club_discount_percent ?? prev.clubDiscountPercent),
+          }));
+          try {
+            const channel = new BroadcastChannel('anime_store_channel');
+            channel.postMessage({ type: 'SETTINGS_UPDATED', settings: data });
+            channel.close();
+          } catch {}
+          showToast('Settings saved', 'Storefront configuration saved to database.');
+        })
+        .catch(() => {
+          showToast('Database sync warning', 'Saved locally, but failed to update backend database.', 'error');
+        });
     },
     [setSettings, showToast]
   );

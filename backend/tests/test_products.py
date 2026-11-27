@@ -59,8 +59,15 @@ async def test_category_and_product_crud(client: AsyncClient, db_session):
     assert prod_data["sku"] == "NEN-001"
     assert prod_data["stock_quantity"] == 25
 
-    # 4. Get Products
+    # 4. Get Products & Search Catalog
     list_res = await client.get("/api/v1/products")
     assert list_res.status_code == 200
     list_data = list_res.json()
     assert list_data["total"] >= 1
+
+    # Search by product name, category name, and series
+    for term in ("tanjiro", "nendoroid", "demon"):
+        search_res = await client.get("/api/v1/products", params={"search": term})
+        assert search_res.status_code == 200
+        items = search_res.json()["items"]
+        assert any(item["sku"] == "NEN-001" for item in items)

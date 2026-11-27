@@ -126,17 +126,17 @@ export default function AdminProfile() {
                   onClick={() => avatarInputRef.current?.click()}
                   icon={<Upload size={16} />}
                 >
-                  Upload Custom Avatar
+                  Upload Custom
                 </Button>
 
-                <Button
+                {/* <Button
                   type="button"
                   variant="ghost"
                   onClick={() => setProfileForm((prev) => ({ ...prev, avatar: avatarPresets[0].svgDataUri }))}
                   icon={<Sparkles size={16} className="text-primary" />}
                 >
                   Use Reference Anime Avatar
-                </Button>
+                </Button> */}
               </div>
 
               {/* Direct Image URL input */}
@@ -164,16 +164,14 @@ export default function AdminProfile() {
                 </Button>
               </div>
 
-              <p className="text-xs text-text-muted">
-                Recommended format: Square PNG, JPG, or SVG. Maximum file size: 2MB.
-              </p>
+              
             </div>
           </div>
 
           {/* Preset Anime Avatars Section */}
           <div className="space-y-3 pt-3 border-t border-border-light">
-            <label className="text-sm font-bold text-text-primary uppercase tracking-wider block">
-              Choose from Anime Avatar Presets
+            <label className="block text-base font-semibold text-text-primary">
+              Choose from Anime
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3.5">
               {avatarPresets.map((preset) => (

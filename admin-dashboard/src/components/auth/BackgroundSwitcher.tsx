@@ -72,7 +72,7 @@ export default function BackgroundSwitcher() {
             <div className="flex items-center justify-between pb-3 border-b border-border-light">
               <div className="flex items-center gap-2">
                 <Palette size={18} className="text-primary" />
-                <h3 className="font-bold font-heading text-text-primary text-base">
+                <h3 className="text-[18px] font-semibold text-text-primary">
                   Choose Background (ផ្លាស់ប្ដូរ Background)
                 </h3>
               </div>

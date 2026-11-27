@@ -17,6 +17,7 @@ from app.models.payment_transaction import PaymentTransaction
 from app.models.financial import FinancialAccount, IncomeRecord, ExpenseRecord
 from app.models.rbac import Role, Permission, RolePermission, UserActivityLog
 from app.models.backup import BackupRecord, AutoBackupConfigModel
+from app.models.notification import Notification
 
 __all__ = [
     "User",
@@ -45,4 +46,5 @@ __all__ = [
     "UserActivityLog",
     "BackupRecord",
     "AutoBackupConfigModel",
+    "Notification",
 ]
